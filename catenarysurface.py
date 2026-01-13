@@ -14,7 +14,7 @@ def jet1( x, y, rodheights ):
     cat_s = cat.findcatenaryparameters( LF, D, rod_00, rod_10 )  
     height_n_x = cat.catenary( x, cat_n )
     height_s_x = cat.catenary( x, cat_s )
-    cat_sn_y = cat.findcatenaryparameters( LF, D, height_n_x, height_s_x )  
+    cat_sn_y = cat.findcatenaryparameters( LF, D, height_s_x, height_n_x )  
 
     f = cat.catenary( x, cat_we_x)  
     dfx = cat.dcatenary( x, cat_we_x)

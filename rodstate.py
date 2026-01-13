@@ -1,7 +1,7 @@
 import numpy as np
 
 from constants import *
-from simplecosinewavecontroller import simplecosinewavecontroller as controller
+from squarecontroller import squarecontroller as controller
 import catenarysurface 
 
 class RodsState:
@@ -17,6 +17,8 @@ class RodsState:
 
         self.coeffs = coeffs
 
+        self.sensors = np.full( (GRIDSIZEX,GRIDSIZEY, 4), False, dtype=bool )
+
         self.timestep = 0.0
 
         self.controller = controller( coeffs )
@@ -28,7 +30,7 @@ class RodsState:
         # surface control 
         for i in range(GRIDSIZEX):
             for j in range(GRIDSIZEY):
-                self.rods[i][j][2] = self.controller.update( i, j, self.timestep )
+                self.rods[i][j][2] += K * ( self.controller.update( i, j, self.timestep , self.sensors[i][j] ) - self.rods[i][j][2] )
 
     def positiontoindex( self, x, y ):
         return( np.array( [int( x / D ), int( y / D )]))        
@@ -44,12 +46,12 @@ class RodsState:
         
             # find heights of surrounding rods
             rodheights = np.array([
-                self.controller.update( x_idx, y_idx, self.timestep ),
-                self.controller.update( x_idx+1, y_idx, self.timestep ),
-                self.controller.update( x_idx, y_idx+1, self.timestep ),
-                self.controller.update( x_idx+1, y_idx+1, self.timestep ),
+                self.rods[x_idx][y_idx][2],
+                self.rods[x_idx + 1][y_idx][2],
+                self.rods[x_idx][y_idx+1][2],
+                self.rods[x_idx + 1][y_idx+1 ][2] 
             ])
-            jet = catenarysurface.jet1( x_local, y_local, rodheights)    
+            jet = catenarysurface.jet1( x_local, y_local, rodheights )    
 
         return( jet )
 

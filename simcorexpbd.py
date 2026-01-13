@@ -164,7 +164,7 @@ def step(
         # -------- Update velocities from corrected positions --------
         ballsstate.v = (ballsstate.r - r0) / h
 
-        # -------- Friction (velocity-level) using λ_n/h as normal impulse --------
+"""         # -------- Friction (velocity-level) using λ_n/h as normal impulse --------
         # Terrain friction with spin (rolling)
         for si, i in enumerate(surf_idx):
             x, y, z = ballsstate.r[i]
@@ -221,6 +221,6 @@ def step(
                 ballsstate.v[i] +=  jt * ballsstate.inv_m[i]
                 ballsstate.v[j] += -jt * ballsstate.inv_m[j]
                 ballsstate.w[i] += np.cross(ri,  jt) * ballsstate.inv_I[i]
-                ballsstate.w[j] += np.cross(rj, -jt) * ballsstate.inv_I[j]
+                ballsstate.w[j] += np.cross(rj, -jt) * ballsstate.inv_I[j] """
 
 

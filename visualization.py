@@ -93,11 +93,12 @@ def generategltffiles( filenameroot, rodsstates, ballsstates, ballradiuses, ):
                 for y in yrange:
                     height_w_y = cat.catenary( y, cat_w )
                     height_e_y = cat.catenary( y, cat_e )
-                    cat_we_y = cat.findcatenaryparameters( LF, D, height_w_y, height_e_y )  
-
                     height_w_dy = cat.catenary( y+dy, cat_w )
                     height_e_dy = cat.catenary( y+dy, cat_e )
+
+                    cat_we_y = cat.findcatenaryparameters( LF, D, height_w_y, height_e_y )  
                     cat_we_dy = cat.findcatenaryparameters( LF, D, height_w_dy, height_e_dy )  
+
 
                     if localflipx:
                         for x in xrangeflip:

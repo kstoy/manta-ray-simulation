@@ -1,7 +1,7 @@
 D  = 1.0                # distance between rods in meters
-LF = 1.42 # (>sqrt(2))                # fabric length factor (e.g. 1 means the fabric is equal to distance, 4 that there is four times more)
+LF = 1.45 # (>sqrt(2))                # fabric length factor (e.g. 1 means the fabric is equal to distance, 4 that there is four times more)
 
-MAXSIMULATIONSTEPS = 100   # x0.1sec = 45seconds  
+MAXSIMULATIONSTEPS = 300   # x0.1sec = 45seconds  
 DT = 0.1                   # simulation time step in seconds
 
 GRIDSIZEX = 10            # poles per side - must be even so there is an odd number of modules per side (restriction from rendering)
@@ -15,8 +15,21 @@ RECORDFRAME = 2 # record every nth frame
 
 MAXCOEFF = 5
 
-NBALL = 10
+NBALL = 20
 
 SIGMA = 0.01 # 0.0005            # this is the std. dev. add as noise to surface height
 
 P = 2.0
+
+K = 0.3          # rod height adjustment speed factor k (p-control)
+
+NE = 0
+NW = 1
+SW = 2
+SE = 3
+
+I = 4 # idle
+E = 5
+N = 6
+W = 7
+S = 8
