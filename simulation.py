@@ -17,13 +17,16 @@ def simulation( coeffs, visualization = True ):
 
     for timestep in range(const.MAXSIMULATIONSTEPS):
 
-        rodsstate.sensors.fill( False ) 
-        for x, y, _ in ballsstate.r:
-             if x > 0.0 and x < const.D*(const.GRIDSIZEX-1) and y > 0.0 and y < const.D*(const.GRIDSIZEY-1):
-                 rodsstate.sensors[int(np.floor(x))][int(np.floor(y))][const.NE] = True
-                 rodsstate.sensors[int(np.ceil(x))][int(np.floor(y))][const.NW] = True
-                 rodsstate.sensors[int(np.ceil(x))][int(np.ceil(y))][const.SW] = True
-                 rodsstate.sensors[int(np.floor(x))][int(np.ceil(y))][const.SE] = True
+        rodsstate.sensors.fill( 0.0 ) 
+        for r, m in zip( ballsstate.r, ballsstate.m ):
+            x = r[0]     
+            y = r[1]     
+
+            if x > 0.0 and x < const.D*(const.GRIDSIZEX-1) and y > 0.0 and y < const.D*(const.GRIDSIZEY-1):
+                 rodsstate.sensors[int(np.floor(x))][int(np.floor(y))][const.NE] += m
+                 rodsstate.sensors[int(np.ceil(x))][int(np.floor(y))][const.NW] += m
+                 rodsstate.sensors[int(np.ceil(x))][int(np.ceil(y))][const.SW] += m
+                 rodsstate.sensors[int(np.floor(x))][int(np.ceil(y))][const.SE] += m
         rodsstate.settimestep( timestep )
         rodsstate.update()
 

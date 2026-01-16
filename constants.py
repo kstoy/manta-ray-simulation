@@ -4,8 +4,8 @@ LF = 1.45 # (>sqrt(2))                # fabric length factor (e.g. 1 means the f
 MAXSIMULATIONSTEPS = 200   # x0.1sec = 45seconds  
 DT = 0.1                   # simulation time step in seconds
 
-GRIDSIZEX = 10            # poles per side - must be even so there is an odd number of modules per side (restriction from rendering)
-GRIDSIZEY = 10
+GRIDSIZEX = 20            # poles per side - must be even so there is an odd number of modules per side (restriction from rendering)
+GRIDSIZEY = 2
 
 TRIANGLES = 9
 
@@ -15,7 +15,9 @@ RECORDFRAME = 2 # record every nth frame
 
 MAXCOEFF = 5
 
-NBALL = 20
+NBALL = GRIDSIZEX - 2
+
+TARGET_WEIGHT = 0.04
 
 SIGMA = 0.01 # 0.0005            # this is the std. dev. add as noise to surface height
 

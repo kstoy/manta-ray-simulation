@@ -1,7 +1,7 @@
 import numpy as np
 
 from constants import *
-from squarecontroller_nonedeterministic_push import squarecontroller as controller
+from mass_sort_controller import controller 
 import catenarysurface 
 
 class RodsState:
@@ -17,7 +17,7 @@ class RodsState:
 
         self.coeffs = coeffs
 
-        self.sensors = np.full( (GRIDSIZEX,GRIDSIZEY, 4), False, dtype=bool )
+        self.sensors = np.full( (GRIDSIZEX,GRIDSIZEY, 4), False, dtype=float )
 
         self.timestep = 0.0
 
