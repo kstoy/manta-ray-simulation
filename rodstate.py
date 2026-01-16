@@ -1,7 +1,7 @@
 import numpy as np
 
 from constants import *
-from squarecontroller import squarecontroller as controller
+from squarecontroller_nonedeterministic_push import squarecontroller as controller
 import catenarysurface 
 
 class RodsState:

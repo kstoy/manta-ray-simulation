@@ -38,7 +38,7 @@ def simulation( coeffs, visualization = True ):
             mu_s=0.5, mu_k=0.5,
             compliance_n=1e-8,     # 0 = hard contact
             num_pos_iters=10,     # tighter contact
-            substeps=1,           # reduce per-substep travel
+            substeps=2,           # reduce per-substep travel
             pair_margin=0.15,
             use_grid_broadphase=False,
             linear_damping=0.01

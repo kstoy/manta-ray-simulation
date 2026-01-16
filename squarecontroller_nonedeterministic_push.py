@@ -27,16 +27,16 @@ class squarecontroller:
 
 
         self.controller = np.flip( np.array( [
-            [S,  S,  S,  S,  S, SW, SW, SW, SW, SW],
-            [SE, SE, SE, SE, SE, SW, S_NW,  S_NW,  S_NW,  W],
-            [S_NE,  S_NE,  S_NE,  S_NE,  SE,  SW, SW, SW, SW, SW],
-            [SE, SE, SE, SE, SE, SW, W,  W,  W,  W],
-            [E,  E,  E,  E,  I,  I,  W,  W,  W,  W],
-            [E,  E,  E,  E,  I,  I,  W,  W,  W,  W],
-            [NE, NE, NE, NE, NE, NW, W,  W,  W,  W],
-            [N_SE,  N_SE,  N_SE,  N_SE,  NE, NW, NW, NW, NW, NW],
-            [NE, NE, NE, NE, NE, NW, N_SW,  N_SW,  N_SW,  W],
-            [N,  N,  N,  N,  NE, NW, NW, NW, NW, NW]
+            [SE, S,  S,  S,  S,  SW, SW, SW, SW, SW],
+            [SE, S,  S,  S,  S,  SW, W,  W,  W,  W],
+            [SE, S,  S,  S,  S,  SW, W,  W,  W,  W],
+            [SE, S,  S,  S,  S,  SW, W,  W,  W,  W],
+            [SE, SE, SE, SE, I,  I,  W,  W,  W,  W],
+            [E,  E,  E,  E,  I,  I,  NW, NW, NW, NW],
+            [E,  E,  E,  E,  NE, N,  N,  N,  N,  NW],
+            [E,  E,  E,  E,  NE, N,  N,  N,  N,  NW],
+            [E,  E,  E,  E,  NE, N,  N,  N,  N,  NW],
+            [NE, NE, NE, NE, NE, N,  N,  N,  N,  NW],
         ] ), 0 )
 
     def update( self, i, j, timestep, sensors ):
