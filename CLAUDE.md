@@ -46,7 +46,7 @@ Sensors are a `(GRIDSIZEX, GRIDSIZEY, 4)` array where the 4 channels represent d
 | `LF` | 1.45 | Fabric length factor (controls sag amount) |
 | `DT` | 0.1 | Physics timestep |
 | `K` | 0.2 | Rod height P-control gain |
-| `CONTROLLER` | "square_push" | Controller type: "square", "square_push", "square_pull", "mass_sort" |
+| `CONTROLLER` | "square_push" | Controller type: "square_push", "square_pull", "weight_sort", "weight_sort_radial", "weight_sort_gradient", "test_slope" |
 | `NBALL` | (derived) | Number of balls = `(GRIDSIZEX-1) * (GRIDSIZEY-1)` |
 
 ## Creating a New Controller
@@ -57,7 +57,7 @@ Sensors are a `(GRIDSIZEX, GRIDSIZEY, 4)` array where the 4 channels represent d
 4. Register controller in [src/controllers/\_\_init\_\_.py](src/controllers/__init__.py) `CONTROLLER_REGISTRY`
 5. Switch controllers via config: `SimConfig(CONTROLLER="your_controller_name")`
 
-Example: [squarecontroller.py](src/controllers/squarecontroller.py) uses pattern masks to create directional movement zones.
+Example: [squarecontroller_nonedeterministic_push.py](src/controllers/squarecontroller_nonedeterministic_push.py) uses pattern masks to create directional movement zones.
 
 ## Dependencies
 

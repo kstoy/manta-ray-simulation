@@ -1,18 +1,24 @@
 """Controller registry for surface control strategies."""
 
 from src.controllers.controller_base import Controller
-from src.controllers.squarecontroller import SquareController
 from src.controllers.squarecontroller_nonedeterministic_push import SquareControllerPush
 from src.controllers.squarecontroller_nonedeterministic_pull import SquareControllerPull
-from src.controllers.mass_sort_controller import MassSortController
+from src.controllers.weightsortcontroller import (
+    WeightSortController,
+    WeightSortRadialController,
+    WeightSortGradientController,
+)
+from src.controllers.testslopecontroller import TestSlopeController
 
 
 # Controller registry - maps string names to controller classes
 CONTROLLER_REGISTRY = {
-    "square": SquareController,
     "square_push": SquareControllerPush,
     "square_pull": SquareControllerPull,
-    "mass_sort": MassSortController,
+    "weight_sort": WeightSortController,
+    "weight_sort_radial": WeightSortRadialController,
+    "weight_sort_gradient": WeightSortGradientController,
+    "test_slope": TestSlopeController,
 }
 
 

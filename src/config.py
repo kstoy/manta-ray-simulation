@@ -18,7 +18,7 @@ class SimConfig:
     MAXCOEFF: int = 5
 
     # Control
-    CONTROLLER: str = "square_push"  # Controller type: "square", "square_push", "square_pull", "mass_sort"
+    CONTROLLER: str = "square_push"  # Controller type: "square_push", "square_pull", "weight_sort", etc.
     K: float = 0.2
     TARGET_WEIGHT: float = 0.04
     P: float = 2.0
