@@ -18,6 +18,7 @@ class SimConfig:
     MAXCOEFF: int = 5
 
     # Control
+    CONTROLLER: str = "square_push"  # Controller type: "square", "square_push", "square_pull", "mass_sort"
     K: float = 0.2
     TARGET_WEIGHT: float = 0.04
     P: float = 2.0
@@ -25,7 +26,6 @@ class SimConfig:
     # Visualization
     TRIANGLES: int = 9
     EXPLODE: float = 1.0
-    RECORDFRAME: int = 2
     SIGMA: float = 0.01
 
     @property

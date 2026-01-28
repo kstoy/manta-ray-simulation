@@ -37,7 +37,7 @@ def findcatenaryparameters(l, d, h1, h2):
         print(f"{l} {d} {h1} {h2}")
         sys.exit(1)
 
-    # Initial guess (equation 42 of Deakin's paper)
+    # Estimate a (equation 42 of Deakin's paper)
     a = d / sqrt(24) * sqrt(d / (sqrt(l**2 - v**2) - d))
 
     # Translate the function to match the known end points

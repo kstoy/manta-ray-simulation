@@ -46,3 +46,25 @@ class SquareControllerPush(Controller):
             return 1.5
         else:
             return 0.5
+
+    def update_all(self, timestep: int, sensors: np.ndarray) -> np.ndarray:
+        """
+        Vectorized update for all rods at once.
+
+        Args:
+            timestep: Current simulation timestep
+            sensors: Sensor array of shape (GRIDSIZEX, GRIDSIZEY, 4)
+
+        Returns:
+            Array of desired heights with shape (GRIDSIZEX, GRIDSIZEY)
+        """
+        # Pattern is indexed as [j][i] (y, x), sensors as [i][j] (x, y)
+        # Transpose pattern to align: (GRIDSIZEY, GRIDSIZEX, 4) -> (GRIDSIZEX, GRIDSIZEY, 4)
+        pattern_aligned = self.pattern.transpose(1, 0, 2)
+
+        # Element-wise logical AND between pattern and sensors, then check if any direction matches
+        # Shape: (GRIDSIZEX, GRIDSIZEY, 4) -> (GRIDSIZEX, GRIDSIZEY)
+        matches = np.logical_and(pattern_aligned, sensors).any(axis=2)
+
+        # Return 1.5 where pattern matches sensor, 0.5 otherwise
+        return np.where(matches, 1.5, 0.5)

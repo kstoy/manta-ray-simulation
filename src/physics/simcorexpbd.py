@@ -66,6 +66,11 @@ def step(
     gvec = np.zeros(3)
     gvec[2] = -abs(gravity)
 
+    # Preallocate buffers to avoid repeated allocations in substep loop
+    r0 = np.empty_like(ballsstate.r)
+    ntil = np.empty(3)  # Reusable normal vector buffer for contact detection
+    n_solver = np.empty(3)  # Reusable normal vector for XPBD solver
+
     for _ in range(substeps):
         # Predict (semi-implicit)
         ballsstate.v += gvec * h
@@ -73,7 +78,7 @@ def step(
             damp = 1.0 / (1.0 + linear_damping)
             ballsstate.v *= damp
             ballsstate.w *= damp
-        r0 = ballsstate.r.copy()
+        np.copyto(r0, ballsstate.r)  # In-place copy, no allocation
         ballsstate.r += h * ballsstate.v
 
         # Build contact candidates (once per substep)
@@ -81,7 +86,9 @@ def step(
         for i in range(ballsstate.N):
             x, y, z = ballsstate.r[i]
             z_s, dfx, dfy = rodsstate.surfacejet(x, y)
-            ntil = np.array([-dfx, -dfy, 1.0])
+            ntil[0] = -dfx
+            ntil[1] = -dfy
+            ntil[2] = 1.0
             nlen = float(np.linalg.norm(ntil))
             if nlen < 1e-12:
                 continue
@@ -110,11 +117,13 @@ def step(
             for si, i in enumerate(surf_idx):
                 x, y, z = ballsstate.r[i]
                 z_s, dfx, dfy = rodsstate.surfacejet(x, y)
-                n = np.array([-dfx, -dfy, 1.0])
-                nlen = float(np.linalg.norm(n))
+                n_solver[0] = -dfx
+                n_solver[1] = -dfy
+                n_solver[2] = 1.0
+                nlen = float(np.linalg.norm(n_solver))
                 if nlen < 1e-12:
                     continue
-                n /= nlen
+                n_solver /= nlen
 
                 C_unscaled = (z - z_s) - ballsstate.R[i] * nlen
                 if C_unscaled < 0.0:
@@ -127,7 +136,7 @@ def step(
                     lam_new = max(0.0, lamN_surface[si] + dLam)
                     dLam = lam_new - lamN_surface[si]
                     lamN_surface[si] = lam_new
-                    ballsstate.r[i] += (dLam * w) * n
+                    ballsstate.r[i] += (dLam * w) * n_solver
 
             # Ball-ball contacts
             for pi, (i, j) in enumerate(pair_idx):

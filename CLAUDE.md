@@ -4,78 +4,61 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Physics-based surface simulation system that models balls rolling on a fabric surface suspended by a grid of controllable rods. Uses catenary curves to model fabric between rod attachment points and XPBD (Extended Position Based Dynamics) for physics simulation with friction.
+Physics-based surface simulation that models balls rolling on a fabric surface suspended by a grid of controllable rods. Uses catenary curves to model fabric sag between attachment points and XPBD (Extended Position Based Dynamics) for collision and friction physics.
 
-**Purpose**: Explore surface control strategies (weight-based, bang-bang, square patterns, cosine waves) to direct ball movement across a fabric surface.
+**Purpose**: Explore surface control strategies to direct ball movement across a deformable fabric surface by raising/lowering rod heights.
 
 ## Running the Code
 
 ```bash
-python run_simulation.py              # Run simulation with visualization
+python run_simulation.py              # Run simulation, outputs GLTF files to output/
 python scripts/performancetest.py     # Benchmark vs ball count
 python scripts/profilesimulation.py   # Profile performance bottlenecks
-```
-
-## Project Structure
-
-```
-surface_sim/
-├── src/                    # Source code package
-│   ├── simulation.py       # Main simulation logic
-│   ├── ballstate.py        # Ball positions, velocities, masses, radii
-│   ├── rodstate.py         # Rod grid management, sensor data
-│   ├── config.py           # SimConfig dataclass
-│   ├── constants.py        # Direction constants (NE, NW, SW, SE)
-│   ├── visualization.py    # GLTF export for 3D visualization
-│   ├── physics/            # Physics modules
-│   │   ├── simcorexpbd.py  # XPBD physics engine
-│   │   ├── catenary.py     # Catenary curve math
-│   │   └── catenarysurface.py  # Surface interpolation
-│   └── controllers/        # Control strategies
-│       ├── controller_base.py
-│       ├── mass_sort_controller.py
-│       ├── squarecontroller.py
-│       └── squarecontroller_nonedeterministic_*.py
-├── scripts/                # Entry point scripts
-├── data/                   # Input data files
-├── output/                 # Generated outputs (gitignored)
-└── run_simulation.py       # Main entry point
 ```
 
 ## Architecture
 
 ### Data Flow
 ```
-Controller → RodsState → Catenary Surface → BallsState → XPBD Physics → Visualization
+Sensors → Controller → RodsState.update() → Catenary Surface → XPBD Physics → BallsState
 ```
 
-### Main Simulation Loop (per timestep)
-1. Sensor collection: aggregate ball weights onto rod corners
-2. Control update: run controller logic for desired rod heights
-3. Rod adjustment: P-control `rod_height += K * (desired - current)`
-4. Physics substeps (2 per timestep): predict, detect collisions, XPBD corrections, friction
-5. State recording for visualization
+### Main Simulation Loop ([src/simulation.py](src/simulation.py))
+1. **Sensor aggregation**: Each ball's mass contributes to 4 surrounding rod corners (NE, NW, SW, SE directions)
+2. **Controller update**: For each rod, `controller.update(i, j, timestep, sensors)` returns desired height
+3. **Rod P-control**: `rod_z += K * (desired - current)` smoothly adjusts rod heights
+4. **Physics substeps**: XPBD solver handles surface contact, ball-ball collisions, friction with spin
 
-## Key Parameters (src/config.py)
+### Core Components
+- **RodsState** ([src/rodstate.py](src/rodstate.py)): Manages rod grid positions, sensors array, calls controller. Change `self.controller` to use different control strategy.
+- **BallsState** ([src/ballstate.py](src/ballstate.py)): Ball positions `r`, velocities `v`, angular velocities `w`, masses `m`, radii `R`
+- **simcorexpbd** ([src/physics/simcorexpbd.py](src/physics/simcorexpbd.py)): XPBD physics with surface height lookup via `rodsstate.surfacejet(x, y)` returning `(z, dz/dx, dz/dy)`
+
+### Sensor System
+Sensors are a `(GRIDSIZEX, GRIDSIZEY, 4)` array where the 4 channels represent directional weight from balls in each quadrant (NE=0, NW=1, SW=2, SE=3 per [src/constants.py](src/constants.py)).
+
+## Key Parameters ([src/config.py](src/config.py))
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `D` | 1.0m | Rod spacing |
-| `LF` | 1.45 | Fabric length factor (sag) |
-| `GRIDSIZEX` / `GRIDSIZEY` | 20 / 4 | Rod grid dimensions |
-| `DT` | 0.1s | Physics timestep |
-| `MAXSIMULATIONSTEPS` | 200 | Simulation length (20 seconds) |
+| `GRIDSIZEX` / `GRIDSIZEY` | 10 / 10 | Rod grid dimensions |
+| `D` | 1.0 | Rod spacing (meters) |
+| `LF` | 1.45 | Fabric length factor (controls sag amount) |
+| `DT` | 0.1 | Physics timestep |
 | `K` | 0.2 | Rod height P-control gain |
-| `TARGET_WEIGHT` | 0.04 | Weight threshold for control |
+| `CONTROLLER` | "square_push" | Controller type: "square", "square_push", "square_pull", "mass_sort" |
+| `NBALL` | (derived) | Number of balls = `(GRIDSIZEX-1) * (GRIDSIZEY-1)` |
 
-## Extension Points
+## Creating a New Controller
 
-**New Controller**: Implement class in `src/controllers/` with `__init__(config)` and `update(i, j, timestep, sensors)` method returning desired rod height.
+1. Create class in `src/controllers/` extending `Controller` from [controller_base.py](src/controllers/controller_base.py)
+2. Implement `update(i, j, timestep, sensors) -> float` returning desired rod height (typically 0.5 to 1.5)
+3. **Optional**: Implement `update_all(timestep, sensors) -> ndarray` for vectorized performance (10-20x faster)
+4. Register controller in [src/controllers/\_\_init\_\_.py](src/controllers/__init__.py) `CONTROLLER_REGISTRY`
+5. Switch controllers via config: `SimConfig(CONTROLLER="your_controller_name")`
 
-**Physics**: Modify `src/physics/simcorexpbd.py` for different constraint solvers or friction models.
+Example: [squarecontroller.py](src/controllers/squarecontroller.py) uses pattern masks to create directional movement zones.
 
 ## Dependencies
 
-- `numpy` - Linear algebra
-- `scipy` - Optimization
-- `pygltflib` - GLTF export
+numpy, scipy, pygltflib

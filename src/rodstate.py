@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.controllers.squarecontroller_nonedeterministic_push import SquareControllerPush
+from src.controllers import get_controller
 from src.physics import catenarysurface
 
 
@@ -19,16 +19,17 @@ class RodsState:
 
         self.sensors = np.full((config.GRIDSIZEX, config.GRIDSIZEY, 4), False, dtype=float)
         self.timestep = 0.0
-        self.controller = SquareControllerPush(config)
+        self.controller = get_controller(config.CONTROLLER, config)
 
     def settimestep(self, timestep):
         self.timestep = timestep
 
     def update(self):
-        for i in range(self.config.GRIDSIZEX):
-            for j in range(self.config.GRIDSIZEY):
-                desired = self.controller.update(i, j, self.timestep, self.sensors[i][j])
-                self.rods[i][j][2] += self.config.K * (desired - self.rods[i][j][2])
+        # Vectorized controller update for all rods at once
+        desired = self.controller.update_all(self.timestep, self.sensors)
+
+        # Vectorized P-control: height += K * (desired - current)
+        self.rods[:, :, 2] += self.config.K * (desired - self.rods[:, :, 2])
 
     def positiontoindex(self, x, y):
         return np.array([int(x / self.config.D), int(y / self.config.D)])
@@ -39,6 +40,11 @@ class RodsState:
             return np.array([-2.0, 0.0, 0.0])
 
         x_idx, y_idx = self.positiontoindex(x, y)
+
+        # Clamp indices to ensure +1 access is valid (need room for 4 corners)
+        x_idx = min(x_idx, self.config.GRIDSIZEX - 2)
+        y_idx = min(y_idx, self.config.GRIDSIZEY - 2)
+
         x_local = x - float(x_idx * self.config.D)
         y_local = y - float(y_idx * self.config.D)
 
