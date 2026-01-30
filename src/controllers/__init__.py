@@ -3,23 +3,37 @@
 from src.controllers.controller_base import Controller
 from src.controllers.squarecontroller_nonedeterministic_push import SquareControllerPush
 from src.controllers.squarecontroller_nonedeterministic_pull import SquareControllerPull
-from src.controllers.weightsortcontroller import (
-    WeightSortController,
-    WeightSortRadialController,
-    WeightSortGradientController,
-)
-from src.controllers.testslopecontroller import TestSlopeController
+
+try:
+    from src.controllers.weightsortcontroller import (
+        WeightSortController,
+        WeightSortRadialController,
+        WeightSortGradientController,
+    )
+    _has_weightsort = True
+except ImportError:
+    _has_weightsort = False
+
+try:
+    from src.controllers.testslopecontroller import TestSlopeController
+    _has_testslope = True
+except ImportError:
+    _has_testslope = False
 
 
 # Controller registry - maps string names to controller classes
 CONTROLLER_REGISTRY = {
     "square_push": SquareControllerPush,
     "square_pull": SquareControllerPull,
-    "weight_sort": WeightSortController,
-    "weight_sort_radial": WeightSortRadialController,
-    "weight_sort_gradient": WeightSortGradientController,
-    "test_slope": TestSlopeController,
 }
+
+if _has_weightsort:
+    CONTROLLER_REGISTRY["weight_sort"] = WeightSortController
+    CONTROLLER_REGISTRY["weight_sort_radial"] = WeightSortRadialController
+    CONTROLLER_REGISTRY["weight_sort_gradient"] = WeightSortGradientController
+
+if _has_testslope:
+    CONTROLLER_REGISTRY["test_slope"] = TestSlopeController
 
 
 def get_controller(name: str, config):
