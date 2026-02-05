@@ -18,6 +18,11 @@ def simulation(config=None, visualization=True):
     ballsstates = []
     rodsstates = []
 
+    # Track when each ball went out of bounds (-1 means not OOB)
+    oob_timestep = np.full(config.NBALL, -1, dtype=int)
+    # Track when the last respawn occurred (for global cooldown)
+    last_respawn_timestep = -1000  # Initialize to allow immediate first respawn
+
     for timestep in range(config.MAXSIMULATIONSTEPS):
         rodsstate.sensors.fill(0.0)
 
@@ -69,21 +74,39 @@ def simulation(config=None, visualization=True):
             oob = ((ballsstate.r[:, 0] < 0) | (ballsstate.r[:, 0] > x_max) |
                    (ballsstate.r[:, 1] < 0) | (ballsstate.r[:, 1] > y_max) |
                    (ballsstate.r[:, 2] < -0.5))
-            if oob.any():
-                spawn_x, spawn_y = 0.5, config.GRIDSIZEY - 1.5
+
+            # Mark newly out-of-bounds balls with current timestep
+            newly_oob = oob & (oob_timestep == -1)
+            oob_timestep[newly_oob] = timestep
+
+            # Reset timer for balls that are back in bounds
+            oob_timestep[~oob] = -1
+
+            # Check if enough time has passed since last respawn (global cooldown)
+            respawn_delay = 5.0  # seconds
+            time_since_last_respawn = (timestep - last_respawn_timestep) * config.DT
+            cooldown_ready = time_since_last_respawn >= respawn_delay
+
+            # Find balls ready to respawn (OOB for at least 2 seconds)
+            ready_to_respawn = oob & ((timestep - oob_timestep) * config.DT >= respawn_delay)
+
+            if ready_to_respawn.any() and cooldown_ready:
+                spawn_x, spawn_y = 0.5, 0.5
                 # Check if spawn cell is empty (no in-bounds ball in the same grid cell)
                 in_bounds = ~oob
                 in_cell = (in_bounds
                            & (np.floor(ballsstate.r[:, 0]).astype(int) == int(np.floor(spawn_x)))
                            & (np.floor(ballsstate.r[:, 1]).astype(int) == int(np.floor(spawn_y))))
                 if not in_cell.any():
-                    idx = np.where(oob)[0][0]
+                    idx = np.where(ready_to_respawn)[0][0]
                     z, _, _ = rodsstate.surfacejet(spawn_x, spawn_y)
                     ballsstate.r[idx] = [spawn_x, spawn_y, z + ballsstate.R[idx] + 0.5]
                     ballsstate.v[idx] = 0.0
                     ballsstate.w[idx] = 0.0
+                    oob_timestep[idx] = -1  # Reset timer
+                    last_respawn_timestep = timestep  # Update global cooldown
 
-        if visualization:
+        if visualization and timestep % 3 == 0:
             rodsstates.append(rodsstate.rods.copy())
             ballsstates.append(ballsstate.r.copy())
 

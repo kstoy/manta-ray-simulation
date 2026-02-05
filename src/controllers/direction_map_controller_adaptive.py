@@ -3,7 +3,7 @@ Adaptive Direction Map Controller
 
 Uses a static priority direction map and maintains a running direction map.
 The running map adapts based on what's possible:
-- Starts with the first priority direction (e.g., "NE" starts as "N")
+- Starts with the first priority direction (e.g., "WE" starts as "W")
 - Switches to next priority when current is blocked
 - Switches back to higher priority when it becomes available again
 """
@@ -171,6 +171,9 @@ class DirectionMapControllerAdaptive(Controller):
 
         Only updates if this piston is in the direction of current movement
         (i.e., has visibility to check if path is blocked).
+
+        Always tries to use the highest priority (first) direction that's available.
+        Falls back to lower priorities only when higher ones are blocked.
         """
         if cx < 0 or cy < 0:
             return

@@ -19,21 +19,20 @@ from src.controllers.direction_map_controller_adaptive import DirectionMapContro
 # Row 0 is BOTTOM, last row is TOP
 
 DIRECTION_MAP = np.flip( np.array([
-    ['S', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W', 'W'],  # row 8 (top)
-    ['S', 'N', 'N', 'N', 'W', 'N', 'W', 'W', 'N', 'N', 'N', 'N'],  # row 8 (top)
-    ['S', 'W', 'I', 'N', 'I', 'W', 'I', 'N', 'I', 'N', 'I', 'N'],  # row 7
-    ['S', 'W', 'N', 'N', 'W', 'NE', 'N', 'N', 'N', 'N', 'N', 'N'],  # row 6
-    ['S', 'W', 'N', 'N', 'W', 'N', 'E', 'N', 'N', 'N', 'N', 'N'],  # row 4 (middle)
-    ['S', 'W', 'N', 'N', 'W', 'N', 'E', 'N', 'N', 'N', 'N', 'N'],  # row 2
-    ['S', 'W', 'N', 'N', 'W', 'N', 'E', 'N', 'NE', 'E', 'N', 'N'],  # row 1
-    ['E', 'E', 'NE','E', 'E', 'NE', 'E', 'E', 'NE','E', 'E', 'N'],  # row 0 (bottom)
+    ['I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I',  'I', 'I'],  # row 7
+    ['I', 'I', 'I', 'I', 'W', 'E', 'I', 'I', 'I', 'I', 'I',  'I', 'I'],  # row 7
+    ['N', 'N', 'I', 'I', 'WN','NE','I', 'I', 'N', 'N', 'I',  'N', 'N'],  # row 6
+    ['N', 'N', 'I', 'I', 'N', 'N', 'I', 'I', 'N', 'N', 'I',  'N', 'N'],  # row 4 (middle)
+    ['N', 'N', 'I', 'I', 'N', 'N', 'I', 'I', 'N', 'N', 'I',  'N', 'N'],  # row 2
+    ['N', 'N', 'I', 'I', 'N', 'N', 'I', 'I', 'N', 'N', 'N',  'N', 'N'],  # row 1
+    ['NE','NE','E', 'E', 'NE','NE','E', 'E', 'NE','NE','NE', 'NE','N'],  # row 0 (bottom)
 ]), 0 )
 
 # =============================================================================
 # SIMULATION CONFIG
 # =============================================================================
-GRIDSIZEX = 13  # Must be DIRECTION_MAP columns + 1
-GRIDSIZEY = 9  # Must be DIRECTION_MAP rows + 1
+GRIDSIZEX = 14  # Must be DIRECTION_MAP columns + 1
+GRIDSIZEY = 8  # Must be DIRECTION_MAP rows + 1
 
 
 class CustomDirectionMapController(DirectionMapControllerAdaptive):
@@ -66,7 +65,7 @@ if __name__ == "__main__":
         GRIDSIZEY=GRIDSIZEY,
         CONTROLLER="custom_direction_map",
     )
-    config.NBALL = 24  # Set number of balls
+    config.NBALL = 46  # Set number of balls
 
     print("Running simulation with custom direction map...")
     start = time.time()

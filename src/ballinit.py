@@ -44,13 +44,13 @@ def grid_uniform(config, rodstate):
 
 
 def random_positions(config, rodstate):
-    """Balls at random x,y positions within the grid, random radii."""
+    """Balls at random x,y positions within the grid, fixed radii."""
     rng = np.random.default_rng()
     N = config.NBALL
 
     v = np.zeros((N, 3), float)
     w = np.zeros((N, 3), float)
-    R = rng.uniform(0.05, 0.15, size=N)
+    R = np.repeat( [0.1], N ) 
     m = 2 * 4 / 3 * np.pi * np.power(R, 3)
 
     r = np.empty((N, 3), float)
@@ -87,10 +87,43 @@ def center_cluster(config, rodstate):
     return r, v, w, m, R
 
 
+def outside_rectangle(config, rodstate):
+    """All balls in a compact rectangular formation outside the grid."""
+    N = config.NBALL
+
+    v = np.zeros((N, 3), float)
+    w = np.zeros((N, 3), float)
+    R = np.repeat([0.1], N)
+    m = 2 * 4 / 3 * np.pi * np.power(R, 3)
+
+    # Create compact rectangular formation
+    spacing = 0.25  # Tight spacing between balls
+    cols = int(np.ceil(np.sqrt(N)))
+
+    # Position outside grid (below y=0, centered in x)
+    grid_center_x = config.D * (config.GRIDSIZEX - 1) / 2.0
+    rect_width = (cols - 1) * spacing
+    start_x = grid_center_x - rect_width / 2.0
+    start_y = -1.5  # Outside grid below y=0
+
+    r = np.empty((N, 3), float)
+    for i in range(N):
+        col = i % cols
+        row = i // cols
+        r[i, 0] = start_x + col * spacing
+        r[i, 1] = start_y - row * spacing
+
+    _set_z_from_surface(r, R, rodstate)
+    _resolve_overlaps(r, R)
+
+    return r, v, w, m, R
+
+
 BALL_INIT_REGISTRY = {
     "grid_uniform": grid_uniform,
     "random": random_positions,
     "center_cluster": center_cluster,
+    "outside_rectangle": outside_rectangle,
 }
 
 

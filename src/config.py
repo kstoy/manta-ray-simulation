@@ -13,12 +13,12 @@ class SimConfig:
 
 
     # Simulation
-    MAXSIMULATIONSTEPS: int = 1500
+    MAXSIMULATIONSTEPS: int = 2750
     DT: float = 0.1
     MAXCOEFF: int = 5
 
     # Ball initialization
-    BALL_INIT: str = "random"  # Ball init: "grid_uniform", "random", "center_cluster"
+    BALL_INIT: str = "outside_rectangle"  # Ball init: "grid_uniform", "random", "center_cluster"
     RESPAWN: bool = True  # Reset out-of-bounds balls to NW corner
 
     # Control

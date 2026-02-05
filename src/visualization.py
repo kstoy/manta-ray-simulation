@@ -200,31 +200,30 @@ def generategltffiles(filenameroot, rodsstates, ballsstates, ballradiuses, confi
     scene = gltf.Scene()
 
     # add nodes
-    # camera
+    # camera - top-down view centered on grid
+    # Calculate grid center (accounting for 0.5 scaling in visualization)
+    grid_width = (config.GRIDSIZEX - 1) * config.D * 0.5
+    grid_height = (config.GRIDSIZEY - 1) * config.D * 0.5
+    center_x = grid_width / 2
+    center_y = grid_height / 2
+    camera_z = 1.0  # Lower height for closer view
+
+    # Camera matrix: identity rotation (looking down -Z), positioned above center
+    # GLTF matrices are column-major
     camera_matrix = [
-        0.996529757976532,
-        0,
-        -0.08323691785335541,
-        0,
-        0.056379012763500214,
-        0.7356777191162109,
-        0.6749812960624695,
-        0,
-        0.06123554706573486,
-        -0.677331805229187,
-        0.7331247329711914,
-        0,
-        3.3165924549102783,
-        -3.3049261569976807,
-        6.134603023529053,
-        1
+        1, 0, 0, 0,           # Column 0: Right = World +X
+        0, 1, 0, 0,           # Column 1: Up = World +Y
+        0, 0, 1, 0,           # Column 2: Back = World +Z (camera looks in -Z = down)
+        center_x, center_y, camera_z, 1  # Column 3: Position above grid center
     ]
 
+    # Set orthographic view to properly frame the entire grid with margin
+    view_size = max(grid_width, grid_height) * 0.7
     gltfobj.cameras.append(gltf.Camera(type="orthographic", orthographic=gltf.Orthographic(
-        xmag=1.0,
-        ymag=1.0,
-        zfar=56.84701458464913,
-        znear=0.005684701458464913)))
+        xmag=view_size,
+        ymag=view_size,
+        zfar=15.0,
+        znear=0.01)))
 
     gltfobj.nodes.append(gltf.Node(camera=0, matrix=camera_matrix))
     scene.nodes.append(0)
