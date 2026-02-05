@@ -64,6 +64,25 @@ def simulation(config=None, visualization=True):
             use_grid_broadphase=True,
             linear_damping=0.01
         )
+
+        if config.RESPAWN:
+            oob = ((ballsstate.r[:, 0] < 0) | (ballsstate.r[:, 0] > x_max) |
+                   (ballsstate.r[:, 1] < 0) | (ballsstate.r[:, 1] > y_max) |
+                   (ballsstate.r[:, 2] < -0.5))
+            if oob.any():
+                spawn_x, spawn_y = 0.5, config.GRIDSIZEY - 1.5
+                # Check if spawn cell is empty (no in-bounds ball in the same grid cell)
+                in_bounds = ~oob
+                in_cell = (in_bounds
+                           & (np.floor(ballsstate.r[:, 0]).astype(int) == int(np.floor(spawn_x)))
+                           & (np.floor(ballsstate.r[:, 1]).astype(int) == int(np.floor(spawn_y))))
+                if not in_cell.any():
+                    idx = np.where(oob)[0][0]
+                    z, _, _ = rodsstate.surfacejet(spawn_x, spawn_y)
+                    ballsstate.r[idx] = [spawn_x, spawn_y, z + ballsstate.R[idx] + 0.5]
+                    ballsstate.v[idx] = 0.0
+                    ballsstate.w[idx] = 0.0
+
         if visualization:
             rodsstates.append(rodsstate.rods.copy())
             ballsstates.append(ballsstate.r.copy())

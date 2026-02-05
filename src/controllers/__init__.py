@@ -20,11 +20,22 @@ try:
 except ImportError:
     _has_testslope = False
 
+from src.controllers.adaptive_threshold_controller import AdaptiveThresholdController
+from src.controllers.direction_map_controller_single import DirectionMapControllerSingle
+from src.controllers.direction_map_controller_multi import DirectionMapControllerMulti
+from src.controllers.direction_map_controller_priority import DirectionMapControllerPriority
+from src.controllers.direction_map_controller_adaptive import DirectionMapControllerAdaptive
+
 
 # Controller registry - maps string names to controller classes
 CONTROLLER_REGISTRY = {
     "square_push": SquareControllerPush,
     "square_pull": SquareControllerPull,
+    "adaptive_threshold": AdaptiveThresholdController,
+    "direction_map_single": DirectionMapControllerSingle,
+    "direction_map_multi": DirectionMapControllerMulti,
+    "direction_map_priority": DirectionMapControllerPriority,
+    "direction_map_adaptive": DirectionMapControllerAdaptive,
 }
 
 if _has_weightsort:

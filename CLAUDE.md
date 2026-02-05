@@ -46,6 +46,7 @@ Sensors are a `(GRIDSIZEX, GRIDSIZEY, 4)` array where the 4 channels represent d
 | `LF` | 1.45 | Fabric length factor (controls sag amount) |
 | `DT` | 0.1 | Physics timestep |
 | `K` | 0.2 | Rod height P-control gain |
+| `BALL_INIT` | "grid_uniform" | Ball initialization: "grid_uniform", "random", "center_cluster" |
 | `CONTROLLER` | "square_push" | Controller type: "square_push", "square_pull", "weight_sort", "weight_sort_radial", "weight_sort_gradient", "test_slope" |
 | `NBALL` | (derived) | Number of balls = `(GRIDSIZEX-1) * (GRIDSIZEY-1)` |
 
