@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.ballinit import get_ball_init
+from src.state.balls_init import get_ball_init
 
 
 class BallsState:

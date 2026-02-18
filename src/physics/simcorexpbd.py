@@ -1,7 +1,7 @@
 import numpy as np
 
-from src import ballstate as bs
-from src import rodstate as rs
+from src.state import balls as bs
+from src.state import rods as rs
 
 
 def grid_pairs_xy(positions, radii, cell_size, margin):

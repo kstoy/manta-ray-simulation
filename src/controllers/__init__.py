@@ -1,72 +1,33 @@
 """Controller registry for surface control strategies."""
 
 from src.controllers.controller_base import Controller
-from src.controllers.squarecontroller_nonedeterministic_push import SquareControllerPush
-from src.controllers.squarecontroller_nonedeterministic_pull import SquareControllerPull
+from src.controllers.controller_blocking import ControllerBlocking
+from src.controllers.controller_nonblocking import ControllerNonBlocking
+from src.controllers.controller_priority import ControllerPriority
 
-try:
-    from src.controllers.weightsortcontroller import (
-        WeightSortController,
-        WeightSortRadialController,
-        WeightSortGradientController,
-    )
-    _has_weightsort = True
-except ImportError:
-    _has_weightsort = False
-
-try:
-    from src.controllers.testslopecontroller import TestSlopeController
-    _has_testslope = True
-except ImportError:
-    _has_testslope = False
-
-from src.controllers.adaptive_threshold_controller import AdaptiveThresholdController
-from src.controllers.direction_map_controller_single import DirectionMapControllerSingle
-from src.controllers.direction_map_controller_multi import DirectionMapControllerMulti
-from src.controllers.direction_map_controller_priority import DirectionMapControllerPriority
-from src.controllers.direction_map_controller_adaptive import DirectionMapControllerAdaptive
-
-
-# Controller registry - maps string names to controller classes
 CONTROLLER_REGISTRY = {
-    "square_push": SquareControllerPush,
-    "square_pull": SquareControllerPull,
-    "adaptive_threshold": AdaptiveThresholdController,
-    "direction_map_single": DirectionMapControllerSingle,
-    "direction_map_multi": DirectionMapControllerMulti,
-    "direction_map_priority": DirectionMapControllerPriority,
-    "direction_map_adaptive": DirectionMapControllerAdaptive,
+    "blocking":    ControllerBlocking,
+    "nonblocking": ControllerNonBlocking,
+    "priority":    ControllerPriority,
 }
 
-if _has_weightsort:
-    CONTROLLER_REGISTRY["weight_sort"] = WeightSortController
-    CONTROLLER_REGISTRY["weight_sort_radial"] = WeightSortRadialController
-    CONTROLLER_REGISTRY["weight_sort_gradient"] = WeightSortGradientController
 
-if _has_testslope:
-    CONTROLLER_REGISTRY["test_slope"] = TestSlopeController
-
-
-def get_controller(name: str, config):
+def get_controller(name_or_factory, config):
     """
-    Get a controller instance by name.
+    Get a controller instance by name or factory callable.
 
     Args:
-        name: Controller name (e.g., "square_push", "square_pull")
+        name_or_factory: Controller name string, or a callable(config) -> Controller
         config: SimConfig instance
-
-    Returns:
-        Controller instance
-
-    Raises:
-        ValueError: If controller name is not registered
     """
-    if name not in CONTROLLER_REGISTRY:
-        available = ", ".join(CONTROLLER_REGISTRY.keys())
-        raise ValueError(f"Unknown controller '{name}'. Available: {available}")
+    if callable(name_or_factory):
+        return name_or_factory(config)
 
-    controller_class = CONTROLLER_REGISTRY[name]
-    return controller_class(config)
+    if name_or_factory not in CONTROLLER_REGISTRY:
+        available = ", ".join(CONTROLLER_REGISTRY.keys())
+        raise ValueError(f"Unknown controller '{name_or_factory}'. Available: {available}")
+
+    return CONTROLLER_REGISTRY[name_or_factory](config)
 
 
 __all__ = ["Controller", "get_controller", "CONTROLLER_REGISTRY"]

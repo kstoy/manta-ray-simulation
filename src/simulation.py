@@ -2,11 +2,11 @@ import numpy as np
 import time
 
 from src.config import SimConfig
-from src.constants import NE, NW, SW, SE
-from src import ballstate as bs
+from src.config import NE, NW, SW, SE
+from src.state import balls as bs
 from src.physics import simcorexpbd as sc
-from src import visualization as vis
-from src import rodstate as rs
+from src.visualization import gltf as vis
+from src.state import rods as rs
 
 def simulation(config=None, visualization=True):
     if config is None:
@@ -106,7 +106,7 @@ def simulation(config=None, visualization=True):
                     oob_timestep[idx] = -1  # Reset timer
                     last_respawn_timestep = timestep  # Update global cooldown
 
-        if visualization and timestep % 3 == 0:
+        if visualization:
             rodsstates.append(rodsstate.rods.copy())
             ballsstates.append(ballsstate.r.copy())
 

@@ -1,20 +1,28 @@
 """
-Adaptive Direction Map Controller
+Priority Controller
 
-Uses a static priority direction map and maintains a running direction map.
-The running map adapts based on what's possible:
-- Starts with the first priority direction (e.g., "WE" starts as "W")
-- Switches to next priority when current is blocked
-- Switches back to higher priority when it becomes available again
+Uses a static priority map and a live running map that persists between timesteps.
+The running map remembers the current active direction per cell and updates it
+based on real-time sensor feedback, rather than re-evaluating priority from scratch.
+
+Action logic (stateful priority with memory):
+  - Running map initialised to first priority direction per cell
+  - Each timestep, pistons in the direction of current movement check if the
+    path is blocked; if so, the running map switches to the next priority direction
+  - Once a higher-priority direction becomes free again, the running map reverts to it
+  - Rod is lowered to 0.5 when: ball in source AND destination (per running map) is free
+  - Otherwise raised to 1.5
+
+A direction map must always be provided explicitly (see experiments/ for examples).
 """
 
 import numpy as np
 from src.controllers.controller_base import Controller
-from src.constants import NE, NW, SW, SE
+from src.config import NE, NW, SW, SE
 
 
-class DirectionMapControllerAdaptive(Controller):
-    """Controller with adaptive direction selection based on priority and availability."""
+class ControllerPriority(Controller):
+    """Controller with direction selection based on priority and availability."""
 
     # Direction constants
     DIR_N = 'N'
@@ -36,9 +44,9 @@ class DirectionMapControllerAdaptive(Controller):
         'W': WEST_OF,
     }
 
-    def __init__(self, config, direction_map=None):
+    def __init__(self, config, direction_map):
         """
-        Initialize the adaptive direction map controller.
+        Initialize the priority direction map controller.
 
         Args:
             config: SimConfig instance
@@ -47,11 +55,7 @@ class DirectionMapControllerAdaptive(Controller):
                           Shape should be (GRIDSIZEY-1, GRIDSIZEX-1) for cells.
         """
         super().__init__(config)
-
-        if direction_map is None:
-            self.priority_map = self._create_default_direction_map()
-        else:
-            self.priority_map = np.array(direction_map)
+        self.priority_map = np.array(direction_map)
 
         # Initialize running map with first priority direction for each cell
         self.running_map = np.empty_like(self.priority_map, dtype='U1')
@@ -67,39 +71,7 @@ class DirectionMapControllerAdaptive(Controller):
         self._setup_quadrant_cell_mapping()
 
         # Print maps at initialization
-        self.print_direction_map()
-
-    def _create_default_direction_map(self):
-        """Create a default priority direction map toward center."""
-        nx = self.config.GRIDSIZEX - 1
-        ny = self.config.GRIDSIZEY - 1
-
-        direction_map = np.full((ny, nx), self.DIR_I, dtype='U4')
-
-        cx = nx / 2.0
-        cy = ny / 2.0
-
-        for j in range(ny):
-            for i in range(nx):
-                dx = (i + 0.5) - cx
-                dy = (j + 0.5) - cy
-
-                if abs(dx) < 0.5 and abs(dy) < 0.5:
-                    direction_map[j, i] = self.DIR_I
-                else:
-                    primary = ''
-                    secondary = ''
-
-                    if abs(dx) > abs(dy):
-                        primary = 'W' if dx > 0 else 'E'
-                        secondary = 'S' if dy > 0 else 'N'
-                    else:
-                        primary = 'S' if dy > 0 else 'N'
-                        secondary = 'W' if dx > 0 else 'E'
-
-                    direction_map[j, i] = primary + secondary
-
-        return direction_map
+        #self.print_direction_map()
 
     def _setup_quadrant_cell_mapping(self):
         """Setup mapping from piston quadrants to direction map cells."""

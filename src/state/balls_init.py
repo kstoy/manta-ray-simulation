@@ -93,18 +93,18 @@ def outside_rectangle(config, rodstate):
 
     v = np.zeros((N, 3), float)
     w = np.zeros((N, 3), float)
-    R = np.repeat([0.1], N)
+    R = np.repeat([0.2], N)
     m = 2 * 4 / 3 * np.pi * np.power(R, 3)
 
     # Create compact rectangular formation
-    spacing = 0.25  # Tight spacing between balls
+    spacing = 0.5  # Tight spacing between balls
     cols = int(np.ceil(np.sqrt(N)))
 
     # Position outside grid (below y=0, centered in x)
     grid_center_x = config.D * (config.GRIDSIZEX - 1) / 2.0
     rect_width = (cols - 1) * spacing
     start_x = grid_center_x - rect_width / 2.0
-    start_y = -1.5  # Outside grid below y=0
+    start_y = -100.5  # Outside grid below y=0
 
     r = np.empty((N, 3), float)
     for i in range(N):

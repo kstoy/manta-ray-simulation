@@ -1,5 +1,11 @@
 from dataclasses import dataclass
 
+# Sensor quadrant direction indices
+NE = 0
+NW = 1
+SW = 2
+SE = 3
+
 
 @dataclass
 class SimConfig:
@@ -22,7 +28,7 @@ class SimConfig:
     RESPAWN: bool = True  # Reset out-of-bounds balls to NW corner
 
     # Control
-    CONTROLLER: str = "direction_map_single" # "adaptive_threshold"  # Controller type: "square_push", "square_pull", "weight_sort", etc.
+    CONTROLLER: object = "blocking"  # str name ("blocking", "nonblocking", "priority") or callable(config)
     K: float = 0.2
     TARGET_WEIGHT: float = 0.04
     P: float = 2.0
