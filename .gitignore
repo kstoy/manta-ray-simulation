@@ -2,6 +2,7 @@
 /__pycache__
 /demo.dat
 /output/*
+!/output/itu-demo.png
 /data/*
 /outcmaes/*
 *.pyc
