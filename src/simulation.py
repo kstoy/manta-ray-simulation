@@ -5,8 +5,8 @@ from src.config import SimConfig
 from src.config import NE, NW, SW, SE
 from src.state import balls as bs
 from src.physics import simcorexpbd as sc
-from src.visualization import gltf as vis
 from src.state import rods as rs
+from src.state.balls_init import get_respawn_position
 
 def simulation(config=None, visualization=True):
     if config is None:
@@ -22,6 +22,8 @@ def simulation(config=None, visualization=True):
     oob_timestep = np.full(config.NBALL, -1, dtype=int)
     # Track when the last respawn occurred (for global cooldown)
     last_respawn_timestep = -1000  # Initialize to allow immediate first respawn
+    respawn_pos_fn = get_respawn_position(config.RESPAWN_STRATEGY)
+    respawn_rng = np.random.default_rng()
 
     for timestep in range(config.MAXSIMULATIONSTEPS):
         rodsstate.sensors.fill(0.0)
@@ -91,7 +93,7 @@ def simulation(config=None, visualization=True):
             ready_to_respawn = oob & ((timestep - oob_timestep) * config.DT >= respawn_delay)
 
             if ready_to_respawn.any() and cooldown_ready:
-                spawn_x, spawn_y = 0.5, 0.5
+                spawn_x, spawn_y = respawn_pos_fn(config, respawn_rng)
                 # Check if spawn cell is empty (no in-bounds ball in the same grid cell)
                 in_bounds = ~oob
                 in_cell = (in_bounds
@@ -125,5 +127,3 @@ if __name__ == "__main__":
     end = time.time()
     print("done")
     print(f"Simulation complete - time elapsed: {end - start}")
-
-    vis.generategltffiles("surfacevisualization", rodsstates, ballsstates, ballsradiuses, config)

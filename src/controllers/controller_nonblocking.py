@@ -32,6 +32,7 @@ class ControllerNonBlocking(Controller):
     def __init__(self, config, direction_map):
         self.direction_map = np.array(direction_map)
         super().__init__(config)
+        self._precompute_vectorized_tables()
         self.print_direction_map()
 
     def _check_quadrant_action(self, sensors, quadrant, direction):
@@ -39,12 +40,45 @@ class ControllerNonBlocking(Controller):
         valid_sources = self.VALID_SOURCES.get(direction, set())
         return quadrant in valid_sources and sensors[quadrant] > 0
 
+    def _precompute_vectorized_tables(self):
+        """Build per-quadrant boolean masks for vectorized update_all()."""
+        gx = self.config.GRIDSIZEX
+        gy = self.config.GRIDSIZEY
+        # For each direction, build a (gx, gy) bool mask that is True
+        # when ANY valid-source quadrant for that direction has a matching
+        # direction in the map.  At runtime we just AND with sensor > 0.
+        self._quadrant_dir_match = {}  # direction -> (gx, gy, 4) bool
+        for direction, sources in self.VALID_SOURCES.items():
+            match = np.zeros((gx, gy, 4), dtype=bool)
+            for q in range(4):
+                if q not in sources:
+                    continue
+                cx = self.quadrant_cell_x[:, :, q]
+                cy = self.quadrant_cell_y[:, :, q]
+                valid = (cx >= 0) & (cy >= 0)
+                # For valid cells, check if direction_map matches
+                cx_safe = np.clip(cx, 0, self.direction_map.shape[1] - 1)
+                cy_safe = np.clip(cy, 0, self.direction_map.shape[0] - 1)
+                match[:, :, q] = valid & (self.direction_map[cy_safe, cx_safe] == direction)
+            self._quadrant_dir_match[direction] = match
+
     def update(self, i: int, j: int, timestep: int, sensors) -> float:
         for quadrant in [NE, NW, SW, SE]:
             direction = self._get_direction_for_quadrant(i, j, quadrant)
             if self._check_quadrant_action(sensors, quadrant, direction):
                 return 0.5
         return 1.5
+
+    def update_all(self, timestep, sensors):
+        """Vectorized update for all rods at once."""
+        has_ball = sensors > 0  # (gx, gy, 4)
+        lower = np.zeros((self.config.GRIDSIZEX, self.config.GRIDSIZEY), dtype=bool)
+        for direction, match in self._quadrant_dir_match.items():
+            # match is (gx, gy, 4) bool — True where quadrant q is a valid source
+            # and its direction_map cell == direction.
+            # OR over quadrants: any quadrant triggers → lower
+            lower |= np.any(match & has_ball, axis=2)
+        return np.where(lower, 0.5, 1.5)
 
     def set_direction_map(self, direction_map):
         self.direction_map = np.array(direction_map)

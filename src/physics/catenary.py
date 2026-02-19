@@ -1,4 +1,5 @@
 from numpy import sinh, cosh, arctanh, sqrt, fabs
+import numpy as np
 import sys
 
 
@@ -47,3 +48,28 @@ def findcatenaryparameters(l, d, h1, h2):
     offsety = h1 - y1
 
     return [a, offsetx, offsety]
+
+
+# --------------- Batch (vectorized) versions ---------------
+
+def findcatenaryparameters_batch(l, d, h1, h2):
+    """Vectorized version: h1, h2 are arrays of length N.
+
+    Returns (a, offsetx, offsety) — three arrays of length N.
+    """
+    v = h2 - h1
+    a = d / np.sqrt(24.0) * np.sqrt(d / (np.sqrt(l * l - v * v) - d))
+    x1 = a * np.arctanh(v / l) - d / 2.0
+    y1 = a * np.cosh(x1 / a)
+    offsety = h1 - y1
+    return a, x1, offsety
+
+
+def catenary_batch(x, a, offsetx, offsety):
+    """Vectorized catenary: all args are arrays of length N (or broadcastable)."""
+    return a * np.cosh((x + offsetx) / a) + offsety
+
+
+def dcatenary_batch(x, a, offsetx, offsety):
+    """Vectorized catenary derivative."""
+    return np.sinh((x + offsetx) / a)

@@ -133,3 +133,43 @@ def get_ball_init(name):
         available = ", ".join(BALL_INIT_REGISTRY.keys())
         raise ValueError(f"Unknown ball init '{name}'. Available: {available}")
     return BALL_INIT_REGISTRY[name]
+
+
+# --- Respawn position functions ---
+# Each takes (config, rng) and returns (x, y) for a single ball respawn.
+
+def _respawn_random(config, rng):
+    x = rng.uniform(0.5, config.D * (config.GRIDSIZEX - 1) - 0.5)
+    y = rng.uniform(0.5, config.D * (config.GRIDSIZEY - 1) - 0.5)
+    return x, y
+
+
+def _respawn_grid_uniform(config, rng):
+    i = rng.integers(0, config.GRIDSIZEX - 1)
+    j = rng.integers(0, config.GRIDSIZEY - 1)
+    return i + 0.5, float(j)
+
+
+def _respawn_center_cluster(config, rng):
+    cx = config.D * (config.GRIDSIZEX - 1) / 2.0
+    cy = config.D * (config.GRIDSIZEY - 1) / 2.0
+    spread = min(cx, cy) * 0.3
+    x = float(np.clip(rng.normal(cx, spread), 0.5, config.D * (config.GRIDSIZEX - 1) - 0.5))
+    y = float(np.clip(rng.normal(cy, spread), 0.5, config.D * (config.GRIDSIZEY - 1) - 0.5))
+    return x, y
+
+
+RESPAWN_REGISTRY = {
+    "grid_uniform": _respawn_grid_uniform,
+    "random": _respawn_random,
+    "center_cluster": _respawn_center_cluster,
+    "outside_rectangle": _respawn_random,  # fallback: random on-surface position
+}
+
+
+def get_respawn_position(name):
+    """Get a respawn position function by BALL_INIT name."""
+    if name not in RESPAWN_REGISTRY:
+        available = ", ".join(RESPAWN_REGISTRY.keys())
+        raise ValueError(f"Unknown respawn strategy '{name}'. Available: {available}")
+    return RESPAWN_REGISTRY[name]

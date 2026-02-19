@@ -92,4 +92,4 @@ Direction values: `N`, `S`, `E`, `W`, `I` (idle). Priority controller also accep
 
 ## Dependencies
 
-numpy, scipy, pygltflib, PyOpenGL, matplotlib, ffmpeg (for video export)
+numpy, scipy, PyOpenGL, matplotlib, ffmpeg (for video export)

@@ -25,7 +25,8 @@ class SimConfig:
 
     # Ball initialization
     BALL_INIT: str = "outside_rectangle"  # Ball init: "grid_uniform", "random", "center_cluster"
-    RESPAWN: bool = True  # Reset out-of-bounds balls to NW corner
+    RESPAWN: bool = True  # Reset out-of-bounds balls
+    RESPAWN_STRATEGY: str = "random"  # Respawn position: "random", "grid_uniform", "center_cluster"
 
     # Control
     CONTROLLER: object = "blocking"  # str name ("blocking", "nonblocking", "priority") or callable(config)
@@ -38,4 +39,4 @@ class SimConfig:
     EXPLODE: float = 1.0
     SIGMA: float = 0.01
 
-    NBALL = 20
+    NBALL: int = 20

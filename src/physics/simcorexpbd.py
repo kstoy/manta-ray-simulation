@@ -68,7 +68,6 @@ def step(
 
     # Preallocate buffers to avoid repeated allocations in substep loop
     r0 = np.empty_like(ballsstate.r)
-    ntil = np.empty(3)  # Reusable normal vector buffer for contact detection
     n_solver = np.empty(3)  # Reusable normal vector for XPBD solver
 
     for _ in range(substeps):
@@ -81,20 +80,16 @@ def step(
         np.copyto(r0, ballsstate.r)  # In-place copy, no allocation
         ballsstate.r += h * ballsstate.v
 
-        # Build contact candidates (once per substep)
-        surf_idx = []
-        for i in range(ballsstate.N):
-            x, y, z = ballsstate.r[i]
-            z_s, dfx, dfy = rodsstate.surfacejet(x, y)
-            ntil[0] = -dfx
-            ntil[1] = -dfy
-            ntil[2] = 1.0
-            nlen = float(np.linalg.norm(ntil))
-            if nlen < 1e-12:
-                continue
-            C = (z - z_s) / nlen - ballsstate.R[i]
-            if C <= pair_margin:
-                surf_idx.append(i)
+        # Build contact candidates (once per substep) — vectorized
+        z_s_all, dfx_all, dfy_all = rodsstate.surfacejet_batch(
+            ballsstate.r[:, 0], ballsstate.r[:, 1]
+        )
+        nx_all = -dfx_all
+        ny_all = -dfy_all
+        nlen_all = np.sqrt(nx_all * nx_all + ny_all * ny_all + 1.0)
+        C_all = (ballsstate.r[:, 2] - z_s_all) / nlen_all - ballsstate.R
+        surf_mask = (nlen_all > 1e-12) & (C_all <= pair_margin)
+        surf_idx = np.where(surf_mask)[0]
 
         if use_grid_broadphase:
             cell = 2.0 * float(np.max(ballsstate.R)) + pair_margin
