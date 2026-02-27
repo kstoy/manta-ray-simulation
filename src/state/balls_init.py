@@ -159,11 +159,16 @@ def _respawn_center_cluster(config, rng):
     return x, y
 
 
+def _respawn_southwest(config, rng):
+    return config.D * 0.5, config.D * 0.5
+
+
 RESPAWN_REGISTRY = {
     "grid_uniform": _respawn_grid_uniform,
     "random": _respawn_random,
     "center_cluster": _respawn_center_cluster,
     "outside_rectangle": _respawn_random,  # fallback: random on-surface position
+    "southwest": _respawn_southwest,
 }
 
 

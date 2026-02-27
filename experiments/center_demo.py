@@ -18,5 +18,5 @@ DIRECTION_MAP = np.flip(np.array([
 
 CONTROLLER         = "nonblocking"
 BALL_INIT          = "outside_rectangle"
-RESPAWN            = True
+RESPAWN_STRATEGY   = "random"
 MAXSIMULATIONSTEPS = 2750

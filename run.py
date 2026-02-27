@@ -4,7 +4,7 @@
 Usage:
     python run.py                                        # simulate and save data
     python run.py --no-save                              # simulate only, no data file
-    python run.py --experiment experiments/itu_demo.py   # use a custom experiment
+    python run.py --experiment experiments/itu_demo_stable.py   # use a custom experiment
     python run.py --output mydata.pkl                    # custom output path
 """
 import argparse

@@ -25,8 +25,8 @@ class SimConfig:
 
     # Ball initialization
     BALL_INIT: str = "outside_rectangle"  # Ball init: "grid_uniform", "random", "center_cluster"
-    RESPAWN: bool = True  # Reset out-of-bounds balls
-    RESPAWN_STRATEGY: str = "random"  # Respawn position: "random", "grid_uniform", "center_cluster"
+    RESPAWN_STRATEGY: object = "random"  # Respawn strategy name ("random", "grid_uniform", etc.), or None to disable
+    RESPAWN_DELAY: float = 0.0  # Seconds a ball must be OOB before respawning (also used as global cooldown)
 
     # Control
     CONTROLLER: object = "blocking"  # str name ("blocking", "nonblocking", "priority") or callable(config)

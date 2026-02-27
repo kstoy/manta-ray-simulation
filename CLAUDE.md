@@ -12,7 +12,7 @@ Physics-based surface simulation that models balls rolling on a fabric surface s
 
 ```bash
 python run.py                                    # Run simulation with default experiment
-python run.py --experiment experiments/itu_demo.py   # Use a custom experiment
+python run.py --experiment experiments/itu_demo_stable.py   # Use a custom experiment
 python run.py --output mydata.pkl                # Custom data file path
 
 python visualize.py opengl                       # Interactive 3D viewer
@@ -69,7 +69,7 @@ import numpy as np
 NBALL = 20
 CONTROLLER    = "nonblocking"   # or "blocking" / "priority"
 BALL_INIT     = "outside_rectangle"
-RESPAWN       = True
+RESPAWN_STRATEGY = "random"
 MAXSIMULATIONSTEPS = 2750
 
 DIRECTION_MAP = np.flip(np.array([

@@ -22,7 +22,7 @@ def simulation(config=None, visualization=True):
     oob_timestep = np.full(config.NBALL, -1, dtype=int)
     # Track when the last respawn occurred (for global cooldown)
     last_respawn_timestep = -1000  # Initialize to allow immediate first respawn
-    respawn_pos_fn = get_respawn_position(config.RESPAWN_STRATEGY)
+    respawn_pos_fn = get_respawn_position(config.RESPAWN_STRATEGY) if config.RESPAWN_STRATEGY is not None else None
     respawn_rng = np.random.default_rng()
 
     for timestep in range(config.MAXSIMULATIONSTEPS):
@@ -72,7 +72,7 @@ def simulation(config=None, visualization=True):
             linear_damping=0.01
         )
 
-        if config.RESPAWN:
+        if config.RESPAWN_STRATEGY is not None:
             oob = ((ballsstate.r[:, 0] < 0) | (ballsstate.r[:, 0] > x_max) |
                    (ballsstate.r[:, 1] < 0) | (ballsstate.r[:, 1] > y_max) |
                    (ballsstate.r[:, 2] < -0.5))
@@ -85,12 +85,11 @@ def simulation(config=None, visualization=True):
             oob_timestep[~oob] = -1
 
             # Check if enough time has passed since last respawn (global cooldown)
-            respawn_delay = 5.0  # seconds
             time_since_last_respawn = (timestep - last_respawn_timestep) * config.DT
-            cooldown_ready = time_since_last_respawn >= respawn_delay
+            cooldown_ready = time_since_last_respawn >= config.RESPAWN_DELAY
 
-            # Find balls ready to respawn (OOB for at least 2 seconds)
-            ready_to_respawn = oob & ((timestep - oob_timestep) * config.DT >= respawn_delay)
+            # Find balls ready to respawn (OOB for at least RESPAWN_DELAY seconds)
+            ready_to_respawn = oob & ((timestep - oob_timestep) * config.DT >= config.RESPAWN_DELAY)
 
             if ready_to_respawn.any() and cooldown_ready:
                 spawn_x, spawn_y = respawn_pos_fn(config, respawn_rng)

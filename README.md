@@ -30,7 +30,7 @@
 <p>Run a simulation and save results to a data file:</p>
 <pre>
 python run.py                                          # default experiment
-python run.py --experiment experiments/itu_demo.py     # custom experiment
+python run.py --experiment experiments/itu_demo_stable.py     # custom experiment
 python run.py --no-save                                # run without saving data
 </pre>
 

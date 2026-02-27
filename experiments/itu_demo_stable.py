@@ -10,11 +10,12 @@ DIRECTION_MAP = np.flip(np.array([
     ['N', 'N', 'I', 'I', 'N', 'N', 'I', 'I', 'N', 'N', 'I',  'N', 'N'],  # row 4
     ['N', 'N', 'I', 'I', 'N', 'N', 'I', 'I', 'N', 'N', 'I',  'N', 'N'],  # row 3
     ['N', 'N', 'I', 'I', 'N', 'N', 'I', 'I', 'N', 'N', 'N',  'N', 'N'],  # row 2
-    ['NE','NE','E', 'E', 'NE','NE','E', 'E', 'NE','NE','NE', 'NE','N'],  # row 1 (bottom)
+    ['NE','NE','E', 'E', 'NE','NE','E', 'E', 'NE','NE','NE', 'NE','N'],  # row 1 
 ]), 0)
 
 NBALL              = 46
 CONTROLLER         = "priority"
 BALL_INIT          = "outside_rectangle"
-RESPAWN            = True
+RESPAWN_STRATEGY   = "southwest"
+RESPAWN_DELAY      = 5.0
 MAXSIMULATIONSTEPS = 2750

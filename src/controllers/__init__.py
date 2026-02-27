@@ -4,11 +4,13 @@ from src.controllers.controller_base import Controller
 from src.controllers.controller_blocking import ControllerBlocking
 from src.controllers.controller_nonblocking import ControllerNonBlocking
 from src.controllers.controller_priority import ControllerPriority
+from src.controllers.controller_priority_delayed import ControllerPriorityDelayed
 
 CONTROLLER_REGISTRY = {
-    "blocking":    ControllerBlocking,
-    "nonblocking": ControllerNonBlocking,
-    "priority":    ControllerPriority,
+    "blocking":         ControllerBlocking,
+    "nonblocking":      ControllerNonBlocking,
+    "priority":         ControllerPriority,
+    "priority_delayed": ControllerPriorityDelayed,
 }
 
 
