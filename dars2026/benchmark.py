@@ -18,13 +18,7 @@ REPETITIONS = 10
 TIMESTEPS = 300
 RESULTS_PATH = Path(__file__).parent / "benchmark_results.pkl"
 
-
 def make_clockwise_direction_map(n_rows, n_cols):
-    """Generate a clockwise circulation direction map.
-
-    Top->E, Right->S, Bottom->W, Left->N.
-    Region assignment based on which edge the cell is closest to.
-    """
     dmap = np.empty((n_rows, n_cols), dtype='<U1')
     cy = (n_rows - 1) / 2.0
     cx = (n_cols - 1) / 2.0
@@ -32,10 +26,10 @@ def make_clockwise_direction_map(n_rows, n_cols):
         for i in range(n_cols):
             dy = j - cy
             dx = i - cx
-            if abs(dy) > abs(dx):
-                dmap[j, i] = 'E' if dy > 0 else 'W'
-            else:
-                dmap[j, i] = 'N' if dx < 0 else 'S'
+            if dy > 0:   # tie, upper half: NW->E, NE->S
+                dmap[j, i] = 'E' if dx < 0 else 'S'
+            else:          # tie, lower half: SW->N, SE->W
+                dmap[j, i] = 'N' if dx < 0 else 'W'
     return dmap
 
 
@@ -47,7 +41,7 @@ def make_config(gx, gy, nball):
         GRIDSIZEY=gy,
         MAXSIMULATIONSTEPS=TIMESTEPS,
         BALL_INIT="random",
-        RESPAWN=True,
+        RESPAWN_STRATEGY="random",
         CONTROLLER=lambda cfg, d=dm: CONTROLLER_REGISTRY["nonblocking"](cfg, d),
     )
     config.NBALL = nball
@@ -96,6 +90,13 @@ def run_benchmarks():
 
 
 if __name__ == "__main__":
+    dm = make_clockwise_direction_map(4, 4)
+    print("Direction map for 5x5 grid:")
+    print("  " + " ".join(str(i) for i in range(dm.shape[1])))
+    for j in range(dm.shape[0] - 1, -1, -1):
+        print(f"{j} " + " ".join(dm[j]))
+    print()
+
     results = run_benchmarks()
     with open(RESULTS_PATH, "wb") as f:
         pickle.dump({
