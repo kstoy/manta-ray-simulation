@@ -5,8 +5,8 @@ Uses a 2D map where each cell contains exactly one direction (N, S, E, W, or I).
 Each piston inspects the direction assigned to each of its 4 surrounding quadrants.
 
 Action logic (avoids pushing into occupied cells):
-  - Ball present in source quadrant AND destination quadrant is free → lower rod to 0.5
-  - Otherwise → raise rod to 1.5
+  - Ball present in source quadrant AND destination quadrant is free → lower rod to LOW_HEIGHT
+  - Otherwise → raise rod to HIGH_HEIGHT
 
 A direction map must always be provided explicitly (see experiments/ for examples).
 """
@@ -45,8 +45,8 @@ class ControllerBlocking(Controller):
         for quadrant in [NE, NW, SW, SE]:
             direction = self._get_direction_for_quadrant(i, j, quadrant)
             if self._check_quadrant_action(sensors, quadrant, direction):
-                return 0.5
-        return 1.5
+                return self.config.LOW_HEIGHT
+        return self.config.HIGH_HEIGHT
 
     def set_direction_map(self, direction_map):
         self.direction_map = np.array(direction_map)

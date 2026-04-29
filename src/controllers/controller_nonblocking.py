@@ -5,8 +5,8 @@ Uses a 2D map where each cell contains exactly one direction (N, S, E, W, or I).
 Each piston inspects the direction assigned to each of its 4 surrounding quadrants.
 
 Action logic (does not check if destination is free):
-  - Ball present in a valid source quadrant for the assigned direction → lower rod to 0.5
-  - Otherwise → raise rod to 1.5
+  - Ball present in a valid source quadrant for the assigned direction → lower rod to LOW_HEIGHT
+  - Otherwise → raise rod to HIGH_HEIGHT
 
 Compared to ControllerBlocking, this will push balls even when the
 destination cell is already occupied, which can cause crowding but reacts faster.
@@ -66,8 +66,8 @@ class ControllerNonBlocking(Controller):
         for quadrant in [NE, NW, SW, SE]:
             direction = self._get_direction_for_quadrant(i, j, quadrant)
             if self._check_quadrant_action(sensors, quadrant, direction):
-                return 0.5
-        return 1.5
+                return self.config.LOW_HEIGHT
+        return self.config.HIGH_HEIGHT
 
     def update_all(self, timestep, sensors):
         """Vectorized update for all rods at once."""
@@ -78,7 +78,7 @@ class ControllerNonBlocking(Controller):
             # and its direction_map cell == direction.
             # OR over quadrants: any quadrant triggers → lower
             lower |= np.any(match & has_ball, axis=2)
-        return np.where(lower, 0.5, 1.5)
+        return np.where(lower, self.config.LOW_HEIGHT, self.config.HIGH_HEIGHT)
 
     def set_direction_map(self, direction_map):
         self.direction_map = np.array(direction_map)

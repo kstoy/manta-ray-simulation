@@ -42,8 +42,8 @@ class ControllerPriorityDelayed(ControllerPriority):
                 if self._action_since[i, j, quadrant] == -1:
                     self._action_since[i, j, quadrant] = timestep
                 if (timestep - self._action_since[i, j, quadrant]) >= delay_steps:
-                    return 0.5
+                    return self.config.LOW_HEIGHT
             else:
                 self._action_since[i, j, quadrant] = -1
 
-        return 1.5
+        return self.config.HIGH_HEIGHT

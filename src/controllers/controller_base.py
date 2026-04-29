@@ -69,7 +69,7 @@ class Controller(ABC):
             sensors: Sensor readings at this rod [NE, NW, SW, SE]
 
         Returns:
-            Desired rod height (typically 0.5 to 1.5)
+            Desired rod height (typically config.LOW_HEIGHT to config.HIGH_HEIGHT)
         """
         pass
 

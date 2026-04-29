@@ -22,23 +22,23 @@ def _compute_surface_grid(rods, config, resolution=20):
     nx = (config.GRIDSIZEX - 1) * resolution + 1
     ny = (config.GRIDSIZEY - 1) * resolution + 1
 
-    X = np.linspace(0, (config.GRIDSIZEX - 1) * config.D, nx)
-    Y = np.linspace(0, (config.GRIDSIZEY - 1) * config.D, ny)
+    X = np.linspace(0, (config.GRIDSIZEX - 1) * config.D_RODS, nx)
+    Y = np.linspace(0, (config.GRIDSIZEY - 1) * config.D_RODS, ny)
     X2d, Y2d = np.meshgrid(X, Y, indexing='ij')
     Z = np.zeros_like(X2d)
 
     for i in range(config.GRIDSIZEX - 1):
         for j in range(config.GRIDSIZEY - 1):
-            x0 = i * config.D
-            y0 = j * config.D
+            x0 = i * config.D_RODS
+            y0 = j * config.D_RODS
 
             rod_sw = rods[i, j, 2]
             rod_se = rods[i + 1, j, 2]
             rod_nw = rods[i, j + 1, 2]
             rod_ne = rods[i + 1, j + 1, 2]
 
-            cat_w = cat.findcatenaryparameters(config.LF, config.D, rod_sw, rod_nw)
-            cat_e = cat.findcatenaryparameters(config.LF, config.D, rod_se, rod_ne)
+            cat_w = cat.findcatenaryparameters(config.D_FABRIC, config.D_RODS, rod_sw, rod_nw)
+            cat_e = cat.findcatenaryparameters(config.D_FABRIC, config.D_RODS, rod_se, rod_ne)
 
             ix_start = i * resolution
             ix_end = (i + 1) * resolution + 1
@@ -51,7 +51,7 @@ def _compute_surface_grid(rods, config, resolution=20):
                     local_y = Y[jj] - y0
                     h_w = cat.catenary(local_y, cat_w)
                     h_e = cat.catenary(local_y, cat_e)
-                    cat_we = cat.findcatenaryparameters(config.LF, config.D, h_w, h_e)
+                    cat_we = cat.findcatenaryparameters(config.D_FABRIC, config.D_RODS, h_w, h_e)
                     Z[ii, jj] = cat.catenary(local_x, cat_we)
 
     return X2d, Y2d, Z
@@ -85,8 +85,8 @@ def animate_simulation(rodsstates, ballsstates, ballradiuses, config,
     z_min -= z_pad
     z_max += z_pad
 
-    x_max = (config.GRIDSIZEX - 1) * config.D
-    y_max = (config.GRIDSIZEY - 1) * config.D
+    x_max = (config.GRIDSIZEX - 1) * config.D_RODS
+    y_max = (config.GRIDSIZEY - 1) * config.D_RODS
 
     # Initial frame
     X, Y, Z = _compute_surface_grid(rodsstates[0], config, resolution)

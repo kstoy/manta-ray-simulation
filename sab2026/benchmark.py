@@ -11,26 +11,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.config import SimConfig
 from src.controllers import CONTROLLER_REGISTRY
 from src import simulation as sim
+from _common import make_clockwise_direction_map
 
 SURFACE_SIZES = [(5, 5), (9, 9), (17, 17)]
-BALL_COUNTS = list(range(10, 110, 10))
+BALL_COUNTS = list(range(20, 120, 20))
 REPETITIONS = 10
 TIMESTEPS = 300
 RESULTS_PATH = Path(__file__).parent / "benchmark_results.pkl"
-
-def make_clockwise_direction_map(n_rows, n_cols):
-    dmap = np.empty((n_rows, n_cols), dtype='<U1')
-    cy = (n_rows - 1) / 2.0
-    cx = (n_cols - 1) / 2.0
-    for j in range(n_rows):
-        for i in range(n_cols):
-            dy = j - cy
-            dx = i - cx
-            if dy > 0:   # tie, upper half: NW->E, NE->S
-                dmap[j, i] = 'E' if dx < 0 else 'S'
-            else:          # tie, lower half: SW->N, SE->W
-                dmap[j, i] = 'N' if dx < 0 else 'W'
-    return dmap
 
 
 def make_config(gx, gy, nball):

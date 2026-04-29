@@ -34,19 +34,21 @@ def simulation(config=None, visualization=True):
         m = ballsstate.m
 
         # Filter valid positions (within bounds)
-        x_max = config.D * (config.GRIDSIZEX - 1)
-        y_max = config.D * (config.GRIDSIZEY - 1)
+        x_max = config.D_RODS * (config.GRIDSIZEX - 1)
+        y_max = config.D_RODS * (config.GRIDSIZEY - 1)
         valid = (x > 0.0) & (x < x_max) & (y > 0.0) & (y < y_max)
 
         x_valid = x[valid]
         y_valid = y[valid]
         m_valid = m[valid]
 
-        # Compute floor/ceil indices for all valid balls
-        x_floor = np.floor(x_valid).astype(int)
-        x_ceil = np.ceil(x_valid).astype(int)
-        y_floor = np.floor(y_valid).astype(int)
-        y_ceil = np.ceil(y_valid).astype(int)
+        # Compute floor/ceil indices for all valid balls (in piston-grid units)
+        x_idx = x_valid / config.D_RODS
+        y_idx = y_valid / config.D_RODS
+        x_floor = np.floor(x_idx).astype(int)
+        x_ceil = np.ceil(x_idx).astype(int)
+        y_floor = np.floor(y_idx).astype(int)
+        y_ceil = np.ceil(y_idx).astype(int)
 
         # Accumulate masses at the 4 corners (NE, NW, SW, SE)
         np.add.at(rodsstate.sensors, (x_floor, y_floor, NE), m_valid)
@@ -67,15 +69,19 @@ def simulation(config=None, visualization=True):
             compliance_n=1e-8,
             num_pos_iters=5,
             substeps=1,
-            pair_margin=0.15,
+            # Slack (m) for the contact-candidate filter: balls within this distance
+            # of the surface or each other are passed to the XPBD solver.
+            pair_margin=0.075,
             use_grid_broadphase=True,
             linear_damping=0.01
         )
 
         if config.RESPAWN_STRATEGY is not None:
+            # A ball is out of bounds if it has left the rod grid in (x, y) or
+            # fallen below z = 0 (the floor on which the rods are mounted).
             oob = ((ballsstate.r[:, 0] < 0) | (ballsstate.r[:, 0] > x_max) |
                    (ballsstate.r[:, 1] < 0) | (ballsstate.r[:, 1] > y_max) |
-                   (ballsstate.r[:, 2] < -0.5))
+                   (ballsstate.r[:, 2] < 0.0))
 
             # Mark newly out-of-bounds balls with current timestep
             newly_oob = oob & (oob_timestep == -1)
@@ -95,13 +101,17 @@ def simulation(config=None, visualization=True):
                 spawn_x, spawn_y = respawn_pos_fn(config, respawn_rng)
                 # Check if spawn cell is empty (no in-bounds ball in the same grid cell)
                 in_bounds = ~oob
+                spawn_cell_x = int(np.floor(spawn_x / config.D_RODS))
+                spawn_cell_y = int(np.floor(spawn_y / config.D_RODS))
                 in_cell = (in_bounds
-                           & (np.floor(ballsstate.r[:, 0]).astype(int) == int(np.floor(spawn_x)))
-                           & (np.floor(ballsstate.r[:, 1]).astype(int) == int(np.floor(spawn_y))))
+                           & (np.floor(ballsstate.r[:, 0] / config.D_RODS).astype(int) == spawn_cell_x)
+                           & (np.floor(ballsstate.r[:, 1] / config.D_RODS).astype(int) == spawn_cell_y))
                 if not in_cell.any():
                     idx = np.where(ready_to_respawn)[0][0]
                     z, _, _ = rodsstate.surfacejet(spawn_x, spawn_y)
-                    ballsstate.r[idx] = [spawn_x, spawn_y, z + ballsstate.R[idx] + 0.5]
+                    # Drop respawning balls from 0.25 m above the surface so they
+                    # settle naturally rather than being placed in initial contact.
+                    ballsstate.r[idx] = [spawn_x, spawn_y, z + ballsstate.R[idx] + 0.25]
                     ballsstate.v[idx] = 0.0
                     ballsstate.w[idx] = 0.0
                     oob_timestep[idx] = -1  # Reset timer

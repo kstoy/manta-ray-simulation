@@ -10,8 +10,8 @@ Action logic (stateful priority with memory):
   - Each timestep, pistons in the direction of current movement check if the
     path is blocked; if so, the running map switches to the next priority direction
   - Once a higher-priority direction becomes free again, the running map reverts to it
-  - Rod is lowered to 0.5 when: ball in source AND destination (per running map) is free
-  - Otherwise raised to 1.5
+  - Rod is lowered to LOW_HEIGHT when: ball in source AND destination (per running map) is free
+  - Otherwise raised to HIGH_HEIGHT
 
 A direction map must always be provided explicitly (see experiments/ for examples).
 """
@@ -218,9 +218,9 @@ class ControllerPriority(Controller):
             if cx >= 0 and cy >= 0:
                 direction = self.running_map[cy, cx]
                 if self._check_quadrant_action(sensors, quadrant, direction):
-                    return 0.5  # Lower the piston
+                    return self.config.LOW_HEIGHT  # Lower the piston
 
-        return 1.5  # Raise the piston
+        return self.config.HIGH_HEIGHT  # Raise the piston
 
     def set_direction_map(self, direction_map):
         """Update the priority map and reset running map."""

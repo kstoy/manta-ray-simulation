@@ -50,8 +50,9 @@ Sensors are a `(GRIDSIZEX, GRIDSIZEY, 4)` array where the 4 channels represent d
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `GRIDSIZEX` / `GRIDSIZEY` | 10 / 10 | Rod grid dimensions (auto-derived from `DIRECTION_MAP` if present) |
-| `D` | 1.0 | Rod spacing (meters) |
-| `LF` | 1.45 | Fabric length factor (controls sag amount) |
+| `D_RODS` | 0.5 | Rod spacing (meters) |
+| `D_FABRIC` | 0.6 | Fabric panel side length per cell (meters); larger than `D_RODS` gives slack so the fabric sags |
+| `LOW_HEIGHT` / `HIGH_HEIGHT` | 0.7 / 1.0 | Rod travel limits (meters); controllers command rods to these two heights |
 | `DT` | 0.1 | Physics timestep |
 | `K` | 0.2 | Rod height P-control gain |
 | `NBALL` | 20 | Number of balls |
@@ -86,7 +87,7 @@ Direction values: `N`, `S`, `E`, `W`, `I` (idle). Priority controller also accep
 
 1. Create class in `src/controllers/` extending `Controller` from [controller_base.py](src/controllers/controller_base.py)
 2. Set `self.direction_map` before calling `super().__init__(config)` if using the shared quadrant mapping
-3. Implement `update(i, j, timestep, sensors) -> float` returning desired rod height (0.5 = lower, 1.5 = raise)
+3. Implement `update(i, j, timestep, sensors) -> float` returning desired rod height (`config.LOW_HEIGHT` = lower, `config.HIGH_HEIGHT` = raise)
 4. **Optional**: Implement `update_all(timestep, sensors) -> ndarray` for vectorized performance
 5. Register in [src/controllers/\_\_init\_\_.py](src/controllers/__init__.py) `CONTROLLER_REGISTRY`
 

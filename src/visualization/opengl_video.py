@@ -100,6 +100,50 @@ def create_shader_program():
     return shader_program
 
 
+def create_cylinder_mesh(sectors=16):
+    """Generate a unit cylinder mesh (radius 1, base at z=0, top at z=1) with normals.
+
+    Includes side wall and top cap; bottom cap is omitted since rods sit on z=0.
+    """
+    vertices = []
+    normals = []
+    indices = []
+
+    # Side wall: pairs of (bottom, top) ring vertices with radial normals
+    for j in range(sectors + 1):
+        angle = j * 2 * np.pi / sectors
+        cx, cy = np.cos(angle), np.sin(angle)
+        vertices.extend([cx, cy, 0.0])
+        normals.extend([cx, cy, 0.0])
+        vertices.extend([cx, cy, 1.0])
+        normals.extend([cx, cy, 0.0])
+
+    for j in range(sectors):
+        b0 = 2 * j
+        t0 = 2 * j + 1
+        b1 = 2 * (j + 1)
+        t1 = 2 * (j + 1) + 1
+        indices.extend([b0, b1, t0])
+        indices.extend([t0, b1, t1])
+
+    # Top cap: ring + center, normals pointing +Z
+    base = len(vertices) // 3
+    for j in range(sectors):
+        angle = j * 2 * np.pi / sectors
+        vertices.extend([np.cos(angle), np.sin(angle), 1.0])
+        normals.extend([0.0, 0.0, 1.0])
+    center = len(vertices) // 3
+    vertices.extend([0.0, 0.0, 1.0])
+    normals.extend([0.0, 0.0, 1.0])
+
+    for j in range(sectors):
+        indices.extend([base + j, center, base + (j + 1) % sectors])
+
+    return (np.array(vertices, dtype=np.float32),
+            np.array(normals, dtype=np.float32),
+            np.array(indices, dtype=np.uint32))
+
+
 def create_sphere_mesh(radius=1.0, sectors=16, stacks=16):
     """Generate a UV sphere mesh with normals."""
     vertices = []
@@ -143,22 +187,22 @@ def compute_surface_mesh(rods, config, resolution=10):
     nx = (config.GRIDSIZEX - 1) * resolution + 1
     ny = (config.GRIDSIZEY - 1) * resolution + 1
 
-    X = np.linspace(0, (config.GRIDSIZEX - 1) * config.D, nx)
-    Y = np.linspace(0, (config.GRIDSIZEY - 1) * config.D, ny)
+    X = np.linspace(0, (config.GRIDSIZEX - 1) * config.D_RODS, nx)
+    Y = np.linspace(0, (config.GRIDSIZEY - 1) * config.D_RODS, ny)
     Z = np.zeros((nx, ny), dtype=np.float32)
 
     for i in range(config.GRIDSIZEX - 1):
         for j in range(config.GRIDSIZEY - 1):
-            x0 = i * config.D
-            y0 = j * config.D
+            x0 = i * config.D_RODS
+            y0 = j * config.D_RODS
 
             rod_sw = rods[i, j, 2]
             rod_se = rods[i + 1, j, 2]
             rod_nw = rods[i, j + 1, 2]
             rod_ne = rods[i + 1, j + 1, 2]
 
-            cat_w = cat.findcatenaryparameters(config.LF, config.D, rod_sw, rod_nw)
-            cat_e = cat.findcatenaryparameters(config.LF, config.D, rod_se, rod_ne)
+            cat_w = cat.findcatenaryparameters(config.D_FABRIC, config.D_RODS, rod_sw, rod_nw)
+            cat_e = cat.findcatenaryparameters(config.D_FABRIC, config.D_RODS, rod_se, rod_ne)
 
             ix_start = i * resolution
             ix_end = (i + 1) * resolution + 1
@@ -171,7 +215,7 @@ def compute_surface_mesh(rods, config, resolution=10):
                     local_y = Y[jj] - y0
                     h_w = cat.catenary(local_y, cat_w)
                     h_e = cat.catenary(local_y, cat_e)
-                    cat_we = cat.findcatenaryparameters(config.LF, config.D, h_w, h_e)
+                    cat_we = cat.findcatenaryparameters(config.D_FABRIC, config.D_RODS, h_w, h_e)
                     Z[ii, jj] = cat.catenary(local_x, cat_we)
 
     vertices = []
@@ -271,7 +315,8 @@ class OpenGLVideoExporter:
     """Exports simulation to MP4 video using OpenGL offscreen rendering."""
 
     def __init__(self, rodsstates, ballsstates, ballradiuses, config,
-                 resolution=10, width=1200, height=800, fps=30):
+                 resolution=10, width=1200, height=800, fps=30,
+                 rod_radius=0.02):
         self.rodsstates = rodsstates
         self.ballsstates = ballsstates
         self.ballradiuses = ballradiuses
@@ -280,11 +325,12 @@ class OpenGLVideoExporter:
         self.width = width
         self.height = height
         self.fps = fps
+        self.rod_radius = rod_radius
 
         # Camera parameters (same as interactive visualizer)
-        grid_center_x = (config.GRIDSIZEX - 1) * config.D / 2
-        grid_center_y = (config.GRIDSIZEY - 1) * config.D / 2
-        self.camera_distance = max(config.GRIDSIZEX, config.GRIDSIZEY) * config.D * 0.7
+        grid_center_x = (config.GRIDSIZEX - 1) * config.D_RODS / 2
+        grid_center_y = (config.GRIDSIZEY - 1) * config.D_RODS / 2
+        self.camera_distance = max(config.GRIDSIZEX, config.GRIDSIZEY) * config.D_RODS * 0.7
         self.camera_angle_h = -np.pi / 2  # horizontal angle (90 degrees left)
         self.camera_angle_v = np.radians(10)  # vertical angle (10 degrees from top)
         self.camera_target = np.array([grid_center_x, grid_center_y, 0.0], dtype=np.float32)
@@ -362,6 +408,34 @@ class OpenGLVideoExporter:
         sphere_ebo = glGenBuffers(1)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphere_ebo)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphere_indices.nbytes, sphere_indices, GL_STATIC_DRAW)
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
+        glEnableVertexAttribArray(0)
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
+        glEnableVertexAttribArray(1)
+
+        # Create cylinder mesh for rods
+        cyl_verts, cyl_normals, cyl_indices = create_cylinder_mesh(16)
+        self.cylinder_index_count = len(cyl_indices)
+
+        self.cylinder_vao = glGenVertexArrays(1)
+        glBindVertexArray(self.cylinder_vao)
+
+        cyl_data = np.zeros(len(cyl_verts) + len(cyl_normals), dtype=np.float32)
+        cyl_data[0::6] = cyl_verts[0::3]
+        cyl_data[1::6] = cyl_verts[1::3]
+        cyl_data[2::6] = cyl_verts[2::3]
+        cyl_data[3::6] = cyl_normals[0::3]
+        cyl_data[4::6] = cyl_normals[1::3]
+        cyl_data[5::6] = cyl_normals[2::3]
+
+        cyl_vbo = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, cyl_vbo)
+        glBufferData(GL_ARRAY_BUFFER, cyl_data.nbytes, cyl_data, GL_STATIC_DRAW)
+
+        cyl_ebo = glGenBuffers(1)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cyl_ebo)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, cyl_indices.nbytes, cyl_indices, GL_STATIC_DRAW)
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
         glEnableVertexAttribArray(0)
@@ -449,6 +523,23 @@ class OpenGLVideoExporter:
 
         glBindVertexArray(self.surface_vao)
         glDrawElements(GL_TRIANGLES, self.surface_index_count, GL_UNSIGNED_INT, None)
+
+        # Draw rods (light gray cylinders from z=0 up to rod height)
+        glUniform3f(color_loc, 0.75, 0.75, 0.78)
+        glUniform1f(spec_strength_loc, 0.4)
+        glUniform1f(shininess_loc, 32.0)
+        rods = self.rodsstates[frame]
+        glBindVertexArray(self.cylinder_vao)
+        for i in range(self.config.GRIDSIZEX):
+            for j in range(self.config.GRIDSIZEY):
+                rx, ry, rz = rods[i, j]
+                # Stop the cylinder slightly below the fabric attachment so the
+                # finite-radius cylinder wall doesn't protrude through the sag.
+                visible_height = max(rz - 2.0 * self.rod_radius, 0.0)
+                model = (translation_matrix(rx, ry, 0.0)
+                         @ scale_matrix(self.rod_radius, self.rod_radius, visible_height))
+                glUniformMatrix4fv(model_loc, 1, GL_TRUE, model)
+                glDrawElements(GL_TRIANGLES, self.cylinder_index_count, GL_UNSIGNED_INT, None)
 
         # Draw balls (shiny)
         glUniform3f(color_loc, 0.15, 0.15, 0.15)

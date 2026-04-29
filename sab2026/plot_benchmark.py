@@ -20,10 +20,9 @@ if __name__ == "__main__":
         ax.plot(ball_counts, means, marker="o", label=label)
         ax.fill_between(ball_counts, means - stds, means + stds, alpha=0.2)
 
-    ax.set_xlabel("Number of balls")
+    ax.set_xlabel("Number of objects")
     ax.set_ylabel("Time (seconds)")
-    ax.set_title(f"Simulation runtime ({timesteps} timesteps, {repetitions} repetitions)")
-    ax.legend(title="Surface size")
+    ax.legend(title="Surface size (# rods)")
     ax.set_xticks(ball_counts)
     fig.tight_layout()
 

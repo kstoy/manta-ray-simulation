@@ -13,9 +13,15 @@ class SimConfig:
     GRIDSIZEX: int = 10
     GRIDSIZEY: int = 10
 
-    # distance between rods, fabric side length factor ( fabric side length = D*LF )
-    D: float = 1.0
-    LF: float = 1.45
+    # Distance between adjacent rods (m) and side length of the fabric panel
+    # spanning each rod cell (m).  D_FABRIC > D_RODS gives slack so the fabric sags.
+    D_RODS: float = 0.5
+    D_FABRIC: float = 0.6
+
+    # Rod travel limits (m).  Controllers command rods to LOW_HEIGHT (lower) or
+    # HIGH_HEIGHT (raise); rods rest at the midpoint at startup.
+    LOW_HEIGHT: float = 0.7
+    HIGH_HEIGHT: float = 1.0
 
 
     # Simulation
@@ -40,3 +46,4 @@ class SimConfig:
     SIGMA: float = 0.01
 
     NBALL: int = 20
+    BALL_RADIUS: float = 0.05

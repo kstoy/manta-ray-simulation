@@ -145,23 +145,23 @@ def compute_surface_mesh(rods, config, resolution=10):
     nx = (config.GRIDSIZEX - 1) * resolution + 1
     ny = (config.GRIDSIZEY - 1) * resolution + 1
 
-    X = np.linspace(0, (config.GRIDSIZEX - 1) * config.D, nx)
-    Y = np.linspace(0, (config.GRIDSIZEY - 1) * config.D, ny)
+    X = np.linspace(0, (config.GRIDSIZEX - 1) * config.D_RODS, nx)
+    Y = np.linspace(0, (config.GRIDSIZEY - 1) * config.D_RODS, ny)
     Z = np.zeros((nx, ny), dtype=np.float32)
 
     # Compute z heights
     for i in range(config.GRIDSIZEX - 1):
         for j in range(config.GRIDSIZEY - 1):
-            x0 = i * config.D
-            y0 = j * config.D
+            x0 = i * config.D_RODS
+            y0 = j * config.D_RODS
 
             rod_sw = rods[i, j, 2]
             rod_se = rods[i + 1, j, 2]
             rod_nw = rods[i, j + 1, 2]
             rod_ne = rods[i + 1, j + 1, 2]
 
-            cat_w = cat.findcatenaryparameters(config.LF, config.D, rod_sw, rod_nw)
-            cat_e = cat.findcatenaryparameters(config.LF, config.D, rod_se, rod_ne)
+            cat_w = cat.findcatenaryparameters(config.D_FABRIC, config.D_RODS, rod_sw, rod_nw)
+            cat_e = cat.findcatenaryparameters(config.D_FABRIC, config.D_RODS, rod_se, rod_ne)
 
             ix_start = i * resolution
             ix_end = (i + 1) * resolution + 1
@@ -174,7 +174,7 @@ def compute_surface_mesh(rods, config, resolution=10):
                     local_y = Y[jj] - y0
                     h_w = cat.catenary(local_y, cat_w)
                     h_e = cat.catenary(local_y, cat_e)
-                    cat_we = cat.findcatenaryparameters(config.LF, config.D, h_w, h_e)
+                    cat_we = cat.findcatenaryparameters(config.D_FABRIC, config.D_RODS, h_w, h_e)
                     Z[ii, jj] = cat.catenary(local_x, cat_we)
 
     # Generate vertices, normals, and indices for triangle mesh
@@ -298,9 +298,9 @@ class OpenGLVisualizer:
         self.last_frame_time = 0
 
         # Camera parameters
-        grid_center_x = (config.GRIDSIZEX - 1) * config.D / 2
-        grid_center_y = (config.GRIDSIZEY - 1) * config.D / 2
-        self.camera_distance = max(config.GRIDSIZEX, config.GRIDSIZEY) * config.D * 0.7
+        grid_center_x = (config.GRIDSIZEX - 1) * config.D_RODS / 2
+        grid_center_y = (config.GRIDSIZEY - 1) * config.D_RODS / 2
+        self.camera_distance = max(config.GRIDSIZEX, config.GRIDSIZEY) * config.D_RODS * 0.7
         self.camera_angle_h = -np.pi / 2  # horizontal angle (90 degrees left)
         self.camera_angle_v = np.radians(10)  # vertical angle (10 degrees from top)
         self.camera_target = np.array([grid_center_x, grid_center_y, 0.0], dtype=np.float32)

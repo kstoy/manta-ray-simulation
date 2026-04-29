@@ -13,9 +13,9 @@ class RodsState:
             np.arange(config.GRIDSIZEX), np.arange(config.GRIDSIZEY), indexing='ij'
         )
 
-        self.rods[:, :, 0] = i_indices * config.D
-        self.rods[:, :, 1] = j_indices * config.D
-        self.rods[:, :, 2] = 1.0
+        self.rods[:, :, 0] = i_indices * config.D_RODS
+        self.rods[:, :, 1] = j_indices * config.D_RODS
+        self.rods[:, :, 2] = 0.5 * (config.LOW_HEIGHT + config.HIGH_HEIGHT)
 
         self.sensors = np.full((config.GRIDSIZEX, config.GRIDSIZEY, 4), False, dtype=float)
         self.timestep = 0.0
@@ -32,15 +32,15 @@ class RodsState:
         self.rods[:, :, 2] += self.config.K * (desired - self.rods[:, :, 2])
 
     def positiontoindex(self, x, y):
-        return np.array([int(x / self.config.D), int(y / self.config.D)])
+        return np.array([int(x / self.config.D_RODS), int(y / self.config.D_RODS)])
 
     def surfacejet(self, x, y):
-        if (x < 0.0 or x > self.config.D * (self.config.GRIDSIZEX - 1)
-                or y < 0.0 or y > self.config.D * (self.config.GRIDSIZEY - 1)):
+        if (x < 0.0 or x > self.config.D_RODS * (self.config.GRIDSIZEX - 1)
+                or y < 0.0 or y > self.config.D_RODS * (self.config.GRIDSIZEY - 1)):
             return (-2.0, 0.0, 0.0)
 
-        x_idx = int(x / self.config.D)
-        y_idx = int(y / self.config.D)
+        x_idx = int(x / self.config.D_RODS)
+        y_idx = int(y / self.config.D_RODS)
 
         # Clamp indices to ensure +1 access is valid (need room for 4 corners)
         if x_idx > self.config.GRIDSIZEX - 2:
@@ -48,8 +48,8 @@ class RodsState:
         if y_idx > self.config.GRIDSIZEY - 2:
             y_idx = self.config.GRIDSIZEY - 2
 
-        x_local = x - x_idx * self.config.D
-        y_local = y - y_idx * self.config.D
+        x_local = x - x_idx * self.config.D_RODS
+        y_local = y - y_idx * self.config.D_RODS
 
         rodheights = (
             self.rods[x_idx, y_idx, 2],
@@ -57,7 +57,7 @@ class RodsState:
             self.rods[x_idx, y_idx + 1, 2],
             self.rods[x_idx + 1, y_idx + 1, 2],
         )
-        return catenarysurface.jet1(x_local, y_local, rodheights, self.config.D, self.config.LF)
+        return catenarysurface.jet1(x_local, y_local, rodheights, self.config.D_RODS, self.config.D_FABRIC)
 
     def surfacejet_batch(self, xs, ys):
         """Vectorized surface height + gradients for N query points.
@@ -69,7 +69,7 @@ class RodsState:
             (z_s, dfx, dfy) — three arrays of length N.
             Out-of-bounds points get z_s = -2.0, dfx = dfy = 0.0.
         """
-        D = self.config.D
+        D = self.config.D_RODS
         gx_max = D * (self.config.GRIDSIZEX - 1)
         gy_max = D * (self.config.GRIDSIZEY - 1)
 
@@ -100,7 +100,7 @@ class RodsState:
         rod_11 = self.rods[xi + 1, yi + 1, 2]
 
         f, dx, dy = catenarysurface.jet1_batch(
-            x_local, y_local, rod_00, rod_10, rod_01, rod_11, D, self.config.LF
+            x_local, y_local, rod_00, rod_10, rod_01, rod_11, D, self.config.D_FABRIC
         )
         z_s[valid] = f
         dfx[valid] = dx
