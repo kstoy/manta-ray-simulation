@@ -30,16 +30,16 @@ if __name__ == "__main__":
         if T is None:
             T = data["timesteps"]
             n_runs = data["n_runs"]
-        t = np.arange(data["timesteps"])
+        t = np.arange(data["timesteps"]) * 0.1
         mean_std_band(ax_pair,   t, data["pair_dist"],   color, label)
         mean_std_band(ax_center, t, data["center_dist"], color, label)
 
-    ax_pair.set_xlabel("Timestep")
+    ax_pair.set_xlabel("Time (s)")
     ax_pair.set_ylabel("Average pairwise distance")
     ax_pair.set_title("Average distance between objects")
     ax_pair.legend()
 
-    ax_center.set_xlabel("Timestep")
+    ax_center.set_xlabel("Time (s)")
     ax_center.set_ylabel("Average distance to center")
     ax_center.set_title("Average distance to surface center")
     ax_center.legend()

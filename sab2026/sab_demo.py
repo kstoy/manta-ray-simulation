@@ -5,7 +5,7 @@ import numpy as np
 # Directions: N S E W I (idle). Priority: "NE" = prefer N, fallback E.
 DIRECTION_MAP = np.flip(np.array([
     ['S', 'W', 'SW','SW','SW','W', 'SW','SW','SW','W', 'W',  'SW','W', 'W', "W"],  # row 7
-    ['S', 'W', 'S', 'I', 'I', 'N', 'S', 'I', 'S', 'N', 'I',  'W', 'W', 'N', "N"],  # row 6
+    ['S', 'W', 'S', 'I', 'I', 'N', 'S', 'I', 'S', 'N', 'I',  'W', 'N', 'N', "N"],  # row 6
     ['S', 'W', 'S', 'E', 'E', 'N', 'S', 'I', 'S', 'N', 'I',  'I', 'I', 'E', "N"],  # row 5
     ['S', 'W', 'I', 'W', 'W', 'N', 'SE','I', 'S', 'N', 'NE', 'I', 'N', 'E', "N"],  # row 4
     ['S', 'W', 'W', 'W', 'N', 'N', 'S', 'S', 'S', 'N', 'N',  'I', 'N', 'E', "N"],  # row 3
