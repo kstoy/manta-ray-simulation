@@ -5,12 +5,14 @@ from src.controllers.controller_blocking import ControllerBlocking
 from src.controllers.controller_nonblocking import ControllerNonBlocking
 from src.controllers.controller_priority import ControllerPriority
 from src.controllers.controller_priority_delayed import ControllerPriorityDelayed
+from src.controllers.controller_priority_preemptive import ControllerPriorityPreemptive
 
 CONTROLLER_REGISTRY = {
-    "blocking":         ControllerBlocking,
-    "nonblocking":      ControllerNonBlocking,
-    "priority":         ControllerPriority,
-    "priority_delayed": ControllerPriorityDelayed,
+    "blocking":            ControllerBlocking,
+    "nonblocking":         ControllerNonBlocking,
+    "priority":            ControllerPriority,
+    "priority_delayed":    ControllerPriorityDelayed,
+    "priority_preemptive": ControllerPriorityPreemptive,
 }
 
 
