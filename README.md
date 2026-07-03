@@ -38,7 +38,6 @@ python run.py --no-save                                # run without saving data
 <pre>
 python visualize.py opengl       # interactive 3D viewer
 python visualize.py video        # export MP4
-python visualize.py matplotlib   # matplotlib animation
 </pre>
 
 <h2>Experiments</h2>

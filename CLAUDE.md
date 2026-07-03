@@ -17,7 +17,6 @@ python run.py --output mydata.pkl                # Custom data file path
 
 python visualize.py opengl                       # Interactive 3D viewer
 python visualize.py video                        # Export MP4
-python visualize.py matplotlib                   # Matplotlib animation
 python visualize.py opengl --input mydata.pkl    # Load from custom path
 
 python scripts/performancetest.py               # Benchmark vs ball count

@@ -4,7 +4,6 @@
 Usage:
     python visualize.py opengl           # interactive 3D viewer
     python visualize.py video            # export output/simulation.mp4
-    python visualize.py matplotlib       # matplotlib 3D animation
     python visualize.py opengl --input mydata.pkl  # custom data file path
 """
 import argparse
@@ -15,7 +14,7 @@ from src import simdata
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Visualize manta ray simulation data")
     parser.add_argument(
-        "viz", choices=["opengl", "video", "matplotlib"],
+        "viz", choices=["opengl", "video"],
         help="Visualization mode"
     )
     parser.add_argument(
@@ -43,8 +42,3 @@ if __name__ == "__main__":
         export_video(rodsstates, ballsstates, ballsradiuses, config,
                      output_path=output_path, fps=30)
         print(f"Video written to {output_path}")
-
-    elif args.viz == "matplotlib":
-        from src.visualization.matplotlib import animate_simulation
-        print("Launching matplotlib visualization...")
-        animate_simulation(rodsstates, ballsstates, ballsradiuses, config)
