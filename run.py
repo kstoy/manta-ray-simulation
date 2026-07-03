@@ -38,7 +38,11 @@ def load_experiment(path):
         if isinstance(config.CONTROLLER, str):
             from src.controllers import CONTROLLER_REGISTRY
             name = config.CONTROLLER
-            config.CONTROLLER = lambda cfg, n=name, d=dm: CONTROLLER_REGISTRY[n](cfg, d)
+            sm = getattr(module, "SORTER_MAP", None)
+            if sm is not None:
+                config.CONTROLLER = lambda cfg, n=name, d=dm, s=sm: CONTROLLER_REGISTRY[n](cfg, d, s)
+            else:
+                config.CONTROLLER = lambda cfg, n=name, d=dm: CONTROLLER_REGISTRY[n](cfg, d)
 
     return config
 
@@ -64,8 +68,8 @@ if __name__ == "__main__":
     print("Running simulation...", end="", flush=True)
     start = time.time()
     save = not args.no_save
-    rodsstates, ballsstates, ballsradiuses = simulation(config=config, visualization=save)
+    rodsstates, ballsstates, ballsradiuses, channels = simulation(config=config, visualization=save)
     print(f" done ({time.time() - start:.1f}s)")
 
     if save:
-        simdata.save(args.output, rodsstates, ballsstates, ballsradiuses, config)
+        simdata.save(args.output, rodsstates, ballsstates, ballsradiuses, config, channels=channels)

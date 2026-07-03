@@ -28,11 +28,12 @@ if __name__ == "__main__":
     ballsstates = data["ballsstates"]
     ballsradiuses = data["ballsradiuses"]
     config = data["config"]
+    channels = data.get("channels")
 
     if args.viz == "opengl":
         from src.visualization.opengl import animate_simulation
         print("Launching OpenGL visualization...")
-        animate_simulation(rodsstates, ballsstates, ballsradiuses, config)
+        animate_simulation(rodsstates, ballsstates, ballsradiuses, config, channels=channels)
 
     elif args.viz == "video":
         from src.visualization.opengl_video import export_video
@@ -40,5 +41,5 @@ if __name__ == "__main__":
         Path("output").mkdir(exist_ok=True)
         print("Exporting video...")
         export_video(rodsstates, ballsstates, ballsradiuses, config,
-                     output_path=output_path, fps=30)
+                     output_path=output_path, fps=30, channels=channels)
         print(f"Video written to {output_path}")

@@ -12,16 +12,22 @@ import ctypes
 import imageio
 
 from src.physics import catenary as cat
+from src.visualization import compute_cell_vertex_colors
 
 
-# Vertex shader - transforms vertices and passes data to fragment shader
+# Vertex shader - transforms vertices and passes data to fragment shader.
+# Attribute 2 (aColor) is an optional per-vertex tint. When not set per-vertex,
+# the generic attribute value (1, 1, 1) is used and acts as a no-op multiplier
+# so the existing single-uniform-colour rendering is preserved.
 VERTEX_SHADER = """
 #version 330 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec3 aColor;
 
 out vec3 FragPos;
 out vec3 Normal;
+out vec3 VertColor;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -31,6 +37,7 @@ void main()
 {
     FragPos = vec3(model * vec4(aPos, 1.0));
     Normal = mat3(transpose(inverse(model))) * aNormal;
+    VertColor = aColor;
     gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
 """
@@ -42,6 +49,7 @@ out vec4 FragColor;
 
 in vec3 FragPos;
 in vec3 Normal;
+in vec3 VertColor;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
@@ -67,7 +75,7 @@ void main()
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     vec3 specular = specularStrength * spec * vec3(1.0, 1.0, 1.0);
 
-    vec3 result = (ambient + diffuse + specular) * objectColor;
+    vec3 result = (ambient + diffuse + specular) * objectColor * VertColor;
     FragColor = vec4(result, 1.0);
 }
 """
@@ -316,16 +324,21 @@ class OpenGLVideoExporter:
 
     def __init__(self, rodsstates, ballsstates, ballradiuses, config,
                  resolution=10, width=1200, height=800, fps=30,
-                 rod_radius=0.02):
+                 rod_radius=0.02, channels=None):
+        from src.visualization import colors_from_radii
         self.rodsstates = rodsstates
         self.ballsstates = ballsstates
         self.ballradiuses = ballradiuses
+        self.ball_colors = colors_from_radii(ballradiuses)
         self.config = config
         self.resolution = resolution
         self.width = width
         self.height = height
         self.fps = fps
         self.rod_radius = rod_radius
+        # Optional per-cell scalar channels for surface tinting. None → existing visuals.
+        self.channels = channels
+        self._weight_frames = channels.get("weight") if channels else None
 
         # Camera parameters (same as interactive visualizer)
         grid_center_x = (config.GRIDSIZEX - 1) * config.D_RODS / 2
@@ -445,7 +458,13 @@ class OpenGLVideoExporter:
         # Create surface VAO
         self.surface_vao = glGenVertexArrays(1)
         self.surface_vbo = glGenBuffers(1)
+        self.surface_color_vbo = glGenBuffers(1)
         self.surface_ebo = glGenBuffers(1)
+
+        # Default the generic vertex-attribute value for the optional per-vertex
+        # color to white so geometry without a color buffer (sphere, cylinder)
+        # renders untinted.
+        glVertexAttrib3f(2, 1.0, 1.0, 1.0)
 
     def update_surface_mesh(self, frame):
         """Update the surface mesh for the given frame."""
@@ -467,13 +486,34 @@ class OpenGLVideoExporter:
         glBindBuffer(GL_ARRAY_BUFFER, self.surface_vbo)
         glBufferData(GL_ARRAY_BUFFER, surface_data.nbytes, surface_data, GL_DYNAMIC_DRAW)
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.surface_ebo)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.nbytes, indices, GL_DYNAMIC_DRAW)
-
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
         glEnableVertexAttribArray(1)
+
+        # Per-vertex color attribute, refreshed each frame from the optional
+        # weight channel. When no channels are present this returns all-white,
+        # which combined with the existing objectColor uniform yields the
+        # previous appearance unchanged.
+        nx = (self.config.GRIDSIZEX - 1) * self.resolution + 1
+        ny = (self.config.GRIDSIZEY - 1) * self.resolution + 1
+        weight_frame = (self._weight_frames[frame]
+                        if self._weight_frames is not None
+                        and frame < len(self._weight_frames)
+                        else None)
+        target = float(getattr(self.config, "TARGET_WEIGHT", 0.0))
+        cell_colors = compute_cell_vertex_colors(
+            weight_frame,
+            self.config.GRIDSIZEX - 1, self.config.GRIDSIZEY - 1,
+            nx, ny, self.resolution, target,
+        )
+        glBindBuffer(GL_ARRAY_BUFFER, self.surface_color_vbo)
+        glBufferData(GL_ARRAY_BUFFER, cell_colors.nbytes, cell_colors, GL_DYNAMIC_DRAW)
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 12, ctypes.c_void_p(0))
+        glEnableVertexAttribArray(2)
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.surface_ebo)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.nbytes, indices, GL_DYNAMIC_DRAW)
 
     def get_camera_position(self):
         """Calculate camera position from angles and distance."""
@@ -541,14 +581,15 @@ class OpenGLVideoExporter:
                 glUniformMatrix4fv(model_loc, 1, GL_TRUE, model)
                 glDrawElements(GL_TRIANGLES, self.cylinder_index_count, GL_UNSIGNED_INT, None)
 
-        # Draw balls (shiny)
-        glUniform3f(color_loc, 0.15, 0.15, 0.15)
+        # Draw balls (shiny), colored by weight class
         glUniform1f(spec_strength_loc, 1.0)
         glUniform1f(shininess_loc, 128.0)
         balls_pos = self.ballsstates[frame]
 
         for i, pos in enumerate(balls_pos):
             radius = self.ballradiuses[i]
+            color = self.ball_colors[i]
+            glUniform3f(color_loc, float(color[0]), float(color[1]), float(color[2]))
             model = translation_matrix(pos[0], pos[1], pos[2]) @ scale_matrix(radius, radius, radius)
             glUniformMatrix4fv(model_loc, 1, GL_TRUE, model)
 
@@ -589,7 +630,8 @@ class OpenGLVideoExporter:
 
 def export_video(rodsstates, ballsstates, ballradiuses, config,
                  output_path="output/simulation.mp4",
-                 resolution=10, width=1200, height=800, fps=30):
+                 resolution=10, width=1200, height=800, fps=30,
+                 channels=None):
     """Export simulation to MP4 video.
 
     Args:
@@ -602,9 +644,13 @@ def export_video(rodsstates, ballsstates, ballradiuses, config,
         width: Video width in pixels.
         height: Video height in pixels.
         fps: Frames per second.
+        channels: Optional dict of per-cell scalar channels. Currently the
+            "weight" channel tints the surface. When None, the surface renders
+            with the original single-colour appearance.
     """
     exporter = OpenGLVideoExporter(
         rodsstates, ballsstates, ballradiuses, config,
-        resolution=resolution, width=width, height=height, fps=fps
+        resolution=resolution, width=width, height=height, fps=fps,
+        channels=channels,
     )
     exporter.export(output_path)
