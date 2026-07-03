@@ -1,7 +1,7 @@
 <h1>Manta Ray Surface Simulation</h1>
 
 <p align="center">
-  <img src="output/itu-demo.png" alt="ITU demo — balls guided to a rectangular formation on the fabric surface" width="600">
+  <img src="assets/itu-demo.png" alt="ITU demo — balls guided to a rectangular formation on the fabric surface" width="600">
 </p>
 
 <p>
