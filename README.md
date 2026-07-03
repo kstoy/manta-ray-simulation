@@ -47,3 +47,29 @@ python visualize.py video        # export MP4
   Each file defines a <code>DIRECTION_MAP</code> and a controller name — the grid size
   is derived automatically from the map dimensions.
 </p>
+
+<table>
+  <tr><th>Experiment</th><th>Status</th><th>Notes</th></tr>
+  <tr><td><code>experiments/itu_demo_stable.py</code></td><td>Stable</td><td>Balls guided into a rectangular formation (ITU demo, see image above)</td></tr>
+  <tr><td><code>experiments/itu_demo_chaotic.py</code></td><td>Stable</td><td>Chaotic controller variant of the ITU demo</td></tr>
+  <tr><td><code>experiments/center_demo.py</code></td><td>Stable</td><td>Balls converge toward the center</td></tr>
+  <tr><td><code>experiments/sab_demo_preemptive.py</code></td><td>Published</td><td>SAB 2026 — priority-preemptive controller, deadlock avoidance (tag <code>SAB2026</code>, see <code>sab2026/</code>)</td></tr>
+</table>
+
+<p>
+  Newer controllers and experiments (weighted bin-covering, distributed
+  coverage, pairwise-exchange, stochastic self-assembly) are under active
+  development on the <code>dev</code> branch and are not yet merged to
+  <code>main</code> — they haven't been demoed or validated enough to call
+  stable. <code>main</code> only carries controllers/experiments that run
+  and have been checked; <code>dev</code> is where new ones are built up
+  before merging.
+</p>
+
+<p>
+  Each paper's exact code is preserved with a git tag (e.g. <code>SAB2026</code>),
+  so results stay reproducible even as <code>main</code> keeps evolving:
+</p>
+<pre>
+git checkout SAB2026    # code as submitted for the SAB 2026 paper
+</pre>
