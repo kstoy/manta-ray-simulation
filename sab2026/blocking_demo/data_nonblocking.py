@@ -41,7 +41,7 @@ def make_config():
 
 def run_once(config):
     with contextlib.redirect_stdout(io.StringIO()):
-        _, ballsstates, _ = simulation(config=config, visualization=True)
+        _, ballsstates, _, _ = simulation(config=config, visualization=True)
     return compute_distance_metrics(ballsstates, config)
 
 

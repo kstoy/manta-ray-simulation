@@ -6,7 +6,7 @@ from src.config import NE, NW, SW, SE
 from src.state import balls as bs
 from src.physics import simcorexpbd as sc
 from src.state import rods as rs
-from src.state.balls_init import get_respawn_position
+from src.state.balls_init import get_respawn_position, seeded_rng
 
 def simulation(config=None, visualization=True):
     if config is None:
@@ -17,13 +17,16 @@ def simulation(config=None, visualization=True):
 
     ballsstates = []
     rodsstates = []
+    # Per-frame per-cell scalar channels. Extend with more entries (e.g. bin_state)
+    # as needed. Each entry is a list of (n_cells_x, n_cells_y) float32 arrays.
+    channels = {"weight": []}
 
     # Track when each ball went out of bounds (-1 means not OOB)
     oob_timestep = np.full(config.NBALL, -1, dtype=int)
     # Track when the last respawn occurred (for global cooldown)
     last_respawn_timestep = -1000  # Initialize to allow immediate first respawn
     respawn_pos_fn = get_respawn_position(config.RESPAWN_STRATEGY) if config.RESPAWN_STRATEGY is not None else None
-    respawn_rng = np.random.default_rng()
+    respawn_rng = seeded_rng(config, stream=1)
 
     for timestep in range(config.MAXSIMULATIONSTEPS):
         rodsstate.sensors.fill(0.0)
@@ -120,8 +123,15 @@ def simulation(config=None, visualization=True):
         if visualization:
             rodsstates.append(rodsstate.rods.copy())
             ballsstates.append(ballsstate.r.copy())
+            # Per-cell weight = NE quadrant of each piston (excluding the rightmost
+            # piston column / topmost piston row, which have no NE-quadrant cell).
+            n_cells_x = config.GRIDSIZEX - 1
+            n_cells_y = config.GRIDSIZEY - 1
+            channels["weight"].append(
+                rodsstate.sensors[:n_cells_x, :n_cells_y, NE].astype(np.float32).copy()
+            )
 
-    return rodsstates, ballsstates, ballsstate.R
+    return rodsstates, ballsstates, ballsstate.R, channels
 
 
 if __name__ == "__main__":
@@ -129,7 +139,7 @@ if __name__ == "__main__":
 
     print("simulation running with visualization...", end="")
     start = time.time()
-    rodsstates, ballsstates, ballsradiuses = simulation(
+    rodsstates, ballsstates, ballsradiuses, _channels = simulation(
         config=config,
         visualization=True
     )

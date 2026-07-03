@@ -64,8 +64,8 @@ if __name__ == "__main__":
     print("Running simulation...", end="", flush=True)
     start = time.time()
     save = not args.no_save
-    rodsstates, ballsstates, ballsradiuses = simulation(config=config, visualization=save)
+    rodsstates, ballsstates, ballsradiuses, channels = simulation(config=config, visualization=save)
     print(f" done ({time.time() - start:.1f}s)")
 
     if save:
-        simdata.save(args.output, rodsstates, ballsstates, ballsradiuses, config)
+        simdata.save(args.output, rodsstates, ballsstates, ballsradiuses, config, channels=channels)

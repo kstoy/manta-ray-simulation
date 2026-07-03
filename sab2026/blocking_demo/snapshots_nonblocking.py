@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     print("Running nonblocking simulation...", end="", flush=True)
     start = time.time()
-    rodsstates, ballsstates, ballsradiuses = simulation(config=config, visualization=True)
+    rodsstates, ballsstates, ballsradiuses, _channels = simulation(config=config, visualization=True)
     print(f" done ({time.time() - start:.1f}s)")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

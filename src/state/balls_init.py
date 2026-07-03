@@ -6,6 +6,34 @@ Each function takes (config, rodstate) and returns (r, v, w, m, R) arrays.
 import numpy as np
 
 
+def seeded_rng(config, stream=0):
+    """Return a NumPy Generator seeded from config.SEED.
+
+    If config.SEED is None the generator is non-deterministic. Otherwise the
+    result is deterministic and independent per `stream` index, so callers that
+    need separate draws (e.g. initial placement vs. respawn) get uncorrelated
+    streams from the same master seed.
+    """
+    seed = getattr(config, "SEED", None)
+    if seed is None:
+        return np.random.default_rng()
+    return np.random.default_rng(np.random.SeedSequence([int(seed), int(stream)]))
+
+
+def _perimeter_point(s, margin, W, H):
+    """Map an arc-length position s in [0, 2*(W+H)) to an (x, y) on the grid
+    perimeter inset by `margin`. Shared by `perimeter_random` and its respawn
+    counterpart."""
+    if s < W:
+        return margin + s, margin
+    elif s < W + H:
+        return margin + W, margin + (s - W)
+    elif s < 2 * W + H:
+        return margin + W - (s - W - H), margin + H
+    else:
+        return margin, margin + H - (s - 2 * W - H)
+
+
 def _resolve_overlaps(r, R):
     """Push overlapping balls upward to resolve collisions."""
     N = len(R)
@@ -158,12 +186,58 @@ def perimeter(config, rodstate):
     return r, v, w, m, R
 
 
+def perimeter_random(config, rodstate):
+    """Balls at random positions along the grid perimeter, fixed radii.
+
+    Like `perimeter` but each ball's arc-length position is sampled uniformly at
+    random (seeded via config.SEED) instead of evenly spaced, so repeated runs
+    with different seeds produce distinct starting layouts.
+
+    No two balls are placed in the same grid cell: each sampled position is
+    rejected and resampled if its cell already holds a previously placed ball.
+    The perimeter spans 2*(nx) + 2*(ny) - 4 border cells, comfortably more than
+    NBALL for this experiment, so rejection sampling terminates quickly.
+    """
+    rng = seeded_rng(config, stream=0)
+    N = config.NBALL
+
+    v = np.zeros((N, 3), float)
+    w = np.zeros((N, 3), float)
+    R = np.repeat([config.BALL_RADIUS], N)
+    m = 2 * 4 / 3 * np.pi * np.power(R, 3)
+
+    margin = 0.1 * config.D_RODS
+    W = config.D_RODS * (config.GRIDSIZEX - 1) - 2 * margin
+    H = config.D_RODS * (config.GRIDSIZEY - 1) - 2 * margin
+    perim = 2 * (W + H)
+    inv = 1.0 / config.D_RODS
+    max_attempts = 1000
+
+    r = np.empty((N, 3), float)
+    occupied = set()
+    for i in range(N):
+        x, y = _perimeter_point(rng.uniform(0.0, perim), margin, W, H)
+        for _ in range(max_attempts):
+            cell = (int(np.floor(x * inv)), int(np.floor(y * inv)))
+            if cell not in occupied:
+                occupied.add(cell)
+                break
+            x, y = _perimeter_point(rng.uniform(0.0, perim), margin, W, H)
+        r[i, 0], r[i, 1] = x, y
+
+    _set_z_from_surface(r, R, rodstate)
+    _resolve_overlaps(r, R)
+
+    return r, v, w, m, R
+
+
 BALL_INIT_REGISTRY = {
     "grid_uniform": grid_uniform,
     "random": random_positions,
     "center_cluster": center_cluster,
     "outside_rectangle": outside_rectangle,
     "perimeter": perimeter,
+    "perimeter_random": perimeter_random,
 }
 
 
@@ -205,6 +279,14 @@ def _respawn_southwest(config, rng):
     return config.D_RODS * 0.5, config.D_RODS * 0.5
 
 
+def _respawn_perimeter_random(config, rng):
+    """Respawn at a uniformly random point along the grid perimeter."""
+    margin = 0.1 * config.D_RODS
+    W = config.D_RODS * (config.GRIDSIZEX - 1) - 2 * margin
+    H = config.D_RODS * (config.GRIDSIZEY - 1) - 2 * margin
+    return _perimeter_point(rng.uniform(0.0, 2 * (W + H)), margin, W, H)
+
+
 RESPAWN_REGISTRY = {
     "grid_uniform": _respawn_grid_uniform,
     "random": _respawn_random,
@@ -212,6 +294,7 @@ RESPAWN_REGISTRY = {
     "outside_rectangle": _respawn_random,  # fallback: random on-surface position
     "perimeter": _respawn_random,  # fallback: random on-surface position
     "southwest": _respawn_southwest,
+    "perimeter_random": _respawn_perimeter_random,
 }
 
 
